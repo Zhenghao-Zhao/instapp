@@ -1,0 +1,310 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url("https://fonts.googleapis.com/css2?family=Roboto&display=swap");
+
+:root {
+  --btn-hover: rgba(0, 0, 0, 0.1);
+  --btn-emphasis: rgba(0, 0, 0, 1);
+  --btn-select: #000;
+  --nav-height: 56px;
+  --main-min-height: calc(100vh - var(--nav-height));
+  --footer-height: 80px;
+  --guide-normal: 15rem;
+  --guide-small: 72px;
+  --backdrop: rgba(0, 0, 0, 0.7);
+  --tooltip: rgba(0, 0, 0, 1);
+  --scrollthumb: hsl(0, 0%, 67%);
+  --scrollthumb-light: hsl(0, 0%, 77%);
+  --scrollWidth: 15px;
+  --upload-caption-width: 20rem;
+  --upload-image-width: calc(min(100vw - 200px, 600px));
+  --upload-header-height: 45px;
+  --upload-height: calc(
+    var(--upload-header-height) + var(--upload-image-width)
+  );
+  --upload-width: calc(var(--upload-image-width) + var(--upload-caption-width));
+  --view-arrow-width: 100px;
+  --view-width: calc(
+    min(1500px, calc(100vw - calc(var(--view-arrow-width) * 2)))
+  );
+  --view-comment-width: 350px;
+  --view-image-width: calc(
+    min(
+      calc(var(--view-width) - var(--view-comment-width)),
+      var(--view-max-height)
+    )
+  );
+  --view-max-height: calc(100vh - 50px);
+  --view-close-top: 20px;
+  --view-close-right: 20px;
+  --profile-image-size: 150px;
+  --grid-max-width: 1310px;
+  --post-page-max-width: 768px;
+  --comment-header-height: 72px;
+  --comment-input-height: 48px;
+  --comment-input-max-height: 108px;
+  --comment-info-height: 48px;
+  --comment-footer-height: calc(
+    var(--comment-input-height) + var(--comment-info-height)
+  );
+  --comment-top-min-height: 100px;
+  --comment-profile-image-size: 45px;
+  --comment-max-width: calc(
+    var(--view-comment-width) - var(--comment-profile-image-size) - 32px
+  );
+  --following-list-width: calc(100vw - 88px);
+  --following-list-height: calc(100vh - 88px);
+  --scroll-view-width: calc(max(min(100vw - 200px, 730px), 200px));
+  --carousel-arrow-width: 50px;
+  --carousel-image-size: calc(
+    min(500px, 100vw - var(--guide-small) - var(--carousel-arrow-width) * 2)
+  );
+  --carousel-image-gap: 20px;
+  --carousel-scroll-padding: 80px;
+
+  /* light theme */
+  --btn-primary: rgba(0, 0, 0, 0.05);
+  --btn-select-primary: #000;
+  --btn-hover-primary: hsl(0, 0%, 90%);
+  --btn-hover-secondary: hsl(0, 0%, 80%);
+  --background-primary: #fff;
+
+  --icon-primary: #000;
+  --modal-primary: #fff;
+  --tooltip-primary: hsl(0, 0%, 17%);
+  --tooltip-text-primary: #fff;
+  --input-primary: hsl(0, 0%, 90%);
+  /* common theme */
+  --btn-hover-transparent: hsla(0, 0%, 50%, 0.5);
+  --text-secondary: hsl(0, 0%, 50%);
+  --loader-primary: hsla(0, 0%, 50%, 0.5);
+  --border-primary: hsla(0, 0%, 50%, 0.5);
+  --placeholder-color: hsl(0, 0%, 50%);
+}
+
+[data-theme="dark"] {
+  --btn-primary: hsl(0, 0%, 17%);
+  --btn-select-primary: #fff;
+  --btn-hover-primary: hsl(0, 0%, 30%);
+  --btn-hover-secondary: hsl(0, 0%, 50%);
+  --background-primary: #000;
+  --text-primary: #fff;
+  --icon-primary: #fff;
+  --modal-primary: hsl(0, 0%, 17%);
+  --tooltip-primary: hsl(0, 0%, 50%);
+  --tooltip-text-primary: #000;
+  --input-primary: hsl(0, 0%, 17%);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="dark"]):not([data-theme="light"]) {
+    --btn-primary: hsl(0, 0%, 17%);
+    --btn-select-primary: #fff;
+    --btn-hover-primary: hsl(0, 0%, 30%);
+    --btn-hover-secondary: hsl(0, 0%, 50%);
+    --background-primary: #000;
+    --text-primary: #fff;
+    --icon-primary: #fff;
+    --modal-primary: hsl(0, 0%, 17%);
+    --tooltip-primary: hsl(0, 0%, 50%);
+    --tooltip-text-primary: #000;
+    --input-primary: hsl(0, 0%, 17%);
+  }
+}
+
+:is(textarea, input)::placeholder {
+  color: var(--placeholder-color);
+}
+
+* {
+  border-color: var(--border-primary);
+}
+
+textarea {
+  @apply resize-none border-none outline-none shadow-none leading-tight;
+}
+
+.icon {
+  @apply pointer-events-none block w-full h-full;
+}
+
+.g-header-template {
+  grid-template-areas:
+    "a b d"
+    "a c c";
+  grid-template-columns: 180px auto auto;
+}
+
+.area-profile {
+  grid-area: a;
+}
+
+.area-name {
+  grid-area: b;
+}
+
+.area-stats {
+  grid-area: c;
+}
+
+.area-follow {
+  grid-area: d;
+  justify-self: center;
+}
+
+@media (max-width: theme("screens.sm")) {
+  .g-header-template {
+    @apply justify-stretch;
+    grid-template-areas:
+      "a b"
+      "c c"
+      "d d";
+    grid-template-columns: 140px 1fr;
+  }
+
+  .area-profile {
+    @apply mx-0;
+  }
+
+  .area-stats {
+    @apply mt-4;
+  }
+
+  .area-follow {
+    @apply mt-4 justify-self-stretch;
+  }
+}
+
+.withoutScroll {
+  overflow: hidden;
+  margin-right: var(--scrollWidth);
+}
+
+::-webkit-scrollbar {
+  width: var(--scrollWidth);
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--base-background-color);
+  border-radius: 8px;
+  border: 4px solid transparent;
+  background-clip: content-box;
+  background-color: var(--scrollthumb);
+}
+
+.scrollbar-hidden::-webkit-scrollbar-thumb {
+  @apply bg-transparent;
+}
+
+.scrollbar-hidden:hover::-webkit-scrollbar-thumb {
+  @apply bg-scrollthumb;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-scrollthumb-light;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+@keyframes spinner {
+  from {
+    background-color: hsla(0, 0%, 50%, 0.8);
+  }
+
+  to {
+    background-color: hsla(0, 0%, 50%, 0);
+  }
+}
+
+@keyframes rotate {
+  0% {
+    transform: rotate(0);
+  }
+
+  100% {
+    transform: rotate(-360deg);
+  }
+}
+
+@keyframes strokeOffset {
+  0% {
+    stroke-dashoffset: 440;
+  }
+
+  50% {
+    stroke-dashoffset: 308;
+  }
+
+  100% {
+    stroke-dashoffset: 440;
+  }
+}
+
+@keyframes fade-in-scale {
+  0% {
+    opacity: 0;
+    scale: 2;
+  }
+
+  100% {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes scale-up {
+  0% {
+    scale: 0;
+  }
+
+  100% {
+    scale: 1;
+  }
+}
+
+@keyframes drop-down {
+  0% {
+    transform: translate(calc(-1 * var(--view-close-top)));
+  }
+
+  100% {
+    transform: translate(0);
+  }
+}
+
+@keyframes iridescent {
+  from {
+    background-color: rgb(47, 113, 236);
+  }
+
+  25% {
+    background: red;
+  }
+
+  50% {
+    background-color: greenyellow;
+  }
+
+  75% {
+    background-color: yellow;
+  }
+
+  to {
+    background-color: rgb(47, 113, 236);
+  }
+}
