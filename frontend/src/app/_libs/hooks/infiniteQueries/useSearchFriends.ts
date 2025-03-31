@@ -1,6 +1,5 @@
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { getFriendsSearchResult } from "../../api/queries";
 import { Friend, Friendship } from "../../types";
 
 export default function useSearchFriends(
@@ -43,3 +42,17 @@ export default function useSearchFriends(
     fetchNextPage,
   };
 }
+
+const getFriendsSearchResult = async (
+  pageParam: number,
+  uid: string,
+  friendship: Friendship,
+  query: string,
+) => {
+  const url =
+    query.length > 0
+      ? `${uid}/${friendship}?page=${pageParam}&query=${query}`
+      : `${uid}/${friendship}?page=${pageParam}`;
+  const result = await clientApi.get<FriendPage>(url);
+  return result.data;
+};

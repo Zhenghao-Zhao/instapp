@@ -1,10 +1,8 @@
 "use client";
-import { signUp } from "@/app/_actions";
+import { useRegistration } from "@/app/_api/hooks/authentication";
 import SubmitButton from "@/app/_components/ui/buttons/submitButton";
 import { signUpSchema } from "@/app/_libs/types";
 import { useRef, useState } from "react";
-import { useFormState } from "react-dom";
-import { VerificationForm } from "../verificationForm";
 
 export type SignUpInfo = {
   email: string;
@@ -24,18 +22,7 @@ export function SignUpForm() {
   const [showNameValidation, setShowNameValidation] = useState(false);
   const [showEmailValidation, setShowEmailValidation] = useState(false);
   const [showPasswordValidation, setShowPasswordValidation] = useState(false);
-  const [formState, action] = useFormState(signUp, {
-    error: null,
-    message: "",
-  });
   const formRef = useRef<HTMLFormElement>(null);
-
-  const handleChange = (e: React.FormEvent<HTMLInputElement>) => {
-    setSignUpInfo({
-      ...signUpInfo,
-      [e.currentTarget.name]: e.currentTarget.value,
-    });
-  };
 
   const validation = signUpSchema.safeParse({
     email: signUpInfo.email,
@@ -49,16 +36,37 @@ export function SignUpForm() {
   const nameError = errors && errors.fieldErrors.name;
   const emailError = errors && errors.fieldErrors.email;
   const passwordError = errors && errors.fieldErrors.password;
+  const {
+    mutation: { mutate },
+    errorMessage,
+  } = useRegistration();
 
-  if (formState.message === "Success")
-    return <VerificationForm email={signUpInfo.email} />;
+  // if (formState.message === "Success") {
+  //   return <VerificationForm email={signUpInfo.email} />;
+  // }
+  const handleChange = (e: React.FormEvent<HTMLInputElement>) => {
+    setSignUpInfo({
+      ...signUpInfo,
+      [e.currentTarget.name]: e.currentTarget.value,
+    });
+  };
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    mutate(formData);
+  };
 
   return (
     <div className="w-[450px]">
       <div className="flex items-center justify-between">
         <p className="text-[25px]">Sign up</p>
       </div>
-      <form action={action} className="flex flex-col gap-2 mt-2" ref={formRef}>
+      <form
+        onSubmit={handleSubmit}
+        className="flex flex-col gap-2 mt-2"
+        ref={formRef}
+      >
         <label className="mt-2">
           <span>Username</span>
           <input
@@ -117,17 +125,9 @@ export function SignUpForm() {
         {showPasswordValidation && passwordError && (
           <p className="text-red-500">{passwordError}</p>
         )}
-        <SubmitButton
-          title="Submit"
-          disabled={!isValid}
-          onClick={() => {
-            if (!formRef.current) return;
-            formRef.current.requestSubmit();
-          }}
-          className="mt-4"
-        />
+        <SubmitButton title="Submit" disabled={!isValid} className="mt-4" />
       </form>
-      {formState.error && <p className="text-red-500">{formState.error}</p>}
+      {<p className="text-red-500">{errorMessage}</p>}
     </div>
   );
 }

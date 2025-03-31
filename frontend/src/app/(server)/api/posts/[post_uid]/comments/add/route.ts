@@ -1,4 +1,4 @@
-import { UserComment } from "@/app/_libs/types";
+import { PostComment } from "@/app/_libs/types";
 import { createClient } from "@/app/_libs/utils/supabase/server";
 import { ENV } from "@/env";
 import { NextRequest, NextResponse } from "next/server";
@@ -45,13 +45,13 @@ export async function POST(
     );
   }
 
-  const rst: UserComment = {
-    uid: data.uid,
-    created_at: data.created_at,
-    comment,
-    has_liked: false,
-    like_count: 0,
-    from_user: {
+  const rst: PostComment = {
+    commentUid: data.uid,
+    createdAt: data.created_at,
+    content: comment,
+    hasLiked: false,
+    likeCount: 0,
+    owner: {
       uid: data.profiles.uid,
       username: data.profiles.username,
       name: data.profiles.name,

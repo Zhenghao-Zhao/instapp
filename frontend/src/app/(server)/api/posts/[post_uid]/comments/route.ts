@@ -1,6 +1,6 @@
 import { getImageURLFromFilename } from "@/app/(server)/api/_utils";
 import { Pagination, STATUS_CODES } from "@/app/(server)/api/_utils/constants";
-import { UserComment } from "@/app/_libs/types";
+import { PostComment } from "@/app/_libs/types";
 import { createClient } from "@/app/_libs/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { supaGetComments } from "../../../_utils/queries";
@@ -43,7 +43,7 @@ export async function GET(
       { status: STATUS_CODES.SERVER_ERROR },
     );
 
-  const comments: UserComment[] = data.map((comment) => ({
+  const comments: PostComment[] = data.map((comment) => ({
     uid: comment.ret_comment_uid,
     created_at: comment.ret_created_at,
     comment: comment.ret_comment,

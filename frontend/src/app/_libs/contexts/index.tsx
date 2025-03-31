@@ -1,11 +1,23 @@
 "use client";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  QueryCache,
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
 import { PropsWithChildren } from "react";
 import GuidebarContextProvider from "./providers/GuidebarContextProvider";
 import ScrollContextProvider from "./providers/ScrollContextProvider";
+import { toast } from "react-toastify";
+import { fromError } from "@/app/_api/utils";
 
 function makeQueryClient() {
-  return new QueryClient({
+  const queryClient = new QueryClient({
+    queryCache: new QueryCache({
+      onError: (error) => {
+        const apiError = fromError(error);
+        toast.error(`Something went wrong: ${apiError.message}`);
+      },
+    }),
     defaultOptions: {
       queries: {
         // With SSR, we usually want to set some default staleTime
@@ -14,6 +26,8 @@ function makeQueryClient() {
       },
     },
   });
+
+  return queryClient;
 }
 
 let browserQueryClient: QueryClient | undefined = undefined;

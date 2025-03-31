@@ -1,34 +1,28 @@
+import { clientApi } from "@/app/_api/axios";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { getComments } from "../../api/queries";
-import { UserComment } from "../../types";
+import { PostComment, commentPageSchema } from "../../types";
 
 export type CommentWithPos = {
-  comment: UserComment;
+  comment: PostComment;
   page: number;
   index: number;
 };
 
-export default function useFetchComments(post_uid: string) {
+export default function useFetchComments(postUid: string) {
   const { data, error, fetchNextPage, hasNextPage, isFetching } =
     useInfiniteQuery({
-      queryKey: ["comments", post_uid],
-      queryFn: ({ pageParam }) => getComments(pageParam, post_uid),
+      queryKey: ["comments", postUid],
+      queryFn: ({ pageParam }) => getComments(pageParam, postUid),
       initialPageParam: 0,
       getNextPageParam: (lastPage, _pages) => lastPage.nextCursor,
       staleTime: 1000 * 60 * 10,
       refetchInterval: 1000 * 60 * 10,
       refetchIntervalInBackground: false,
     });
-  const comments: CommentWithPos[] = useMemo(() => {
+  const comments = useMemo(() => {
     if (!data) return [];
-    const allComments: CommentWithPos[] = data.pages.flatMap((page, i: number) =>
-      page.comments.map((comment: UserComment, j: number) => ({
-        comment,
-        page: i,
-        index: j
-      }))
-    );
+    const allComments = data.pages.flatMap((page) => page.data);
     return allComments;
   }, [data]);
   return {
@@ -39,3 +33,10 @@ export default function useFetchComments(post_uid: string) {
     fetchNextPage,
   };
 }
+
+const getComments = async (pageParam: number, postUid: string) => {
+  const result = await clientApi.get(
+    `post/${postUid}/comment?page=${pageParam}`,
+  );
+  return commentPageSchema.parse(result.data.payload);
+};

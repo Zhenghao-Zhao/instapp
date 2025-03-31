@@ -1,25 +1,30 @@
-import { signIn } from "@/app/_actions";
+import { useSignin as useSignin } from "@/app/_api/hooks/authentication";
 import SubmitButton from "@/app/_components/ui/buttons/submitButton";
 import { signInSchema } from "@/app/_libs/types";
-import { useRef, useState } from "react";
-import { useFormState } from "react-dom";
-export function LoginForm() {
+import { FormEvent, useRef, useState } from "react";
+export function SigninForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showEmailValidation, setShowEmailValidation] = useState(false);
   const [showPasswordValidation, setShowPasswordValidation] = useState(false);
-  const [formState, action] = useFormState(signIn, {
-    error: null,
-    message: "",
-  });
   const formRef = useRef<HTMLFormElement>(null);
+  const {
+    mutation: { mutate },
+    errorMessage,
+  } = useSignin();
 
-  const handleEmailChange = (e: React.FormEvent<HTMLInputElement>) => {
+  const handleEmailChange = (e: FormEvent<HTMLInputElement>) => {
     setEmail(e.currentTarget.value);
   };
 
-  const handlePasswordChange = (e: React.FormEvent<HTMLInputElement>) => {
+  const handlePasswordChange = (e: FormEvent<HTMLInputElement>) => {
     setPassword(e.currentTarget.value);
+  };
+
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const data = new FormData(e.currentTarget);
+    mutate(data);
   };
 
   const validation = signInSchema.safeParse({ email, password });
@@ -33,7 +38,11 @@ export function LoginForm() {
       <div className="flex items-center justify-between">
         <p className="text-[25px]">Sign in</p>
       </div>
-      <form action={action} className="flex flex-col gap-2 mt-2" ref={formRef}>
+      <form
+        onSubmit={handleSubmit}
+        className="flex flex-col gap-2 mt-2"
+        ref={formRef}
+      >
         <label className="mt-2">
           <span>Email</span>
           <input
@@ -64,17 +73,9 @@ export function LoginForm() {
         {showPasswordValidation && passwordError && (
           <p className="text-red-500">{passwordError}</p>
         )}
-        <SubmitButton
-          title="Submit"
-          disabled={!isValid}
-          onClick={() => {
-            if (!formRef.current) return;
-            formRef.current.requestSubmit();
-          }}
-          className="mt-4"
-        />
+        <SubmitButton title="Submit" disabled={!isValid} className="mt-4" />
+        <p className="text-red-500">{errorMessage}</p>
       </form>
-      {formState.error && <p className="text-red-500">{formState.error}</p>}
     </div>
   );
 }

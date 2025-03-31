@@ -6,11 +6,11 @@ import { MiniGuideEntry } from "./GuideEntry";
 
 export default function MiniGuide() {
   const { guideLayout } = useGuidebarContext();
-  const { data } = useDataContext();
+  const { authProfile } = useDataContext();
 
   const miniGuideData = useMemo(
-    () => getMiniGuideData(data.profile.username),
-    [data.profile.username],
+    () => getMiniGuideData(authProfile.username),
+    [authProfile.username],
   );
 
   return (

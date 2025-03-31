@@ -17,7 +17,7 @@ export default function FriendList({
   friendship: Friendship;
 }) {
   const [query, setQuery] = useState("");
-  const { data } = useDataContext();
+  const { authProfile: data } = useDataContext();
   const { list, fetchNextPage, isFetching, hasNextPage, isFetchingNextPage } =
     useSearchFriends(uid, friendship, query);
   return (
@@ -53,9 +53,9 @@ export default function FriendList({
                     </Link>
                     <p className="text-text-secondary">{friend.username}</p>
                   </div>
-                  {friend.uid !== data.profile.uid && (
+                  {friend.uid !== data.userUid && (
                     <FollowButton
-                      has_followed={friend.has_followed}
+                      has_followed={friend.hasFollowed}
                       to_uid={friend.uid}
                     />
                   )}

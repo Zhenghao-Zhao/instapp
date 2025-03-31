@@ -14,8 +14,8 @@ import Link from "next/link";
 export default function Content({ initData }: { initData: Post }) {
   const isServer = useIsServer();
   const { data: post } = useQuery({
-    queryKey: ["posts", initData.uid],
-    queryFn: () => getPost(initData.uid),
+    queryKey: ["posts", initData.postUid],
+    queryFn: () => getPost(initData.postUid),
     initialData: initData,
     refetchOnMount: false,
     refetchOnReconnect: false,
@@ -25,35 +25,33 @@ export default function Content({ initData }: { initData: Post }) {
       <section className="w-full flex items-center px-carousel-arrow-width">
         <div className="flex flex-col gap-2 justify-center pb-4 px-4">
           <div className="flex items-center gap-4">
-            <Link href={post.owner.bioURL}>
+            <Link href={post.owner.username}>
               <ProfileImage
-                imageURL={post.owner.imageURL}
+                imageURL={post.owner.profileImageUrl}
                 className="size-12"
               />
             </Link>
-            <Link href={post.owner.bioURL}>
+            <Link href={post.owner.username}>
               <p className="whitespace-nowrap text-ellipsis">
                 {post.owner.name}
               </p>
             </Link>
-            {!post.is_owner && !post.owner.has_followed && (
+            {!post.isOwner && !post.owner.isFollowing && (
               <button className="p-2 bg-blue-500 rounded-md text-white text-sm">
                 Follow
               </button>
             )}
           </div>
-          {post.description && (
-            <p className="flex items-center">{post.description}</p>
-          )}
+          {post.content && <p className="flex items-center">{post.content}</p>}
           {!isServer && (
             <p className="text-xs text-text-secondary">
-              {formatDate(post.created_at)}
+              {formatDate(post.createdAt)}
             </p>
           )}
         </div>
       </section>
       <section className="w-full h-carousel-image-size">
-        <SpacedCarousel dataURLs={post.imageURLs} />
+        <SpacedCarousel dataURLs={post.imageUrls} />
       </section>
       <section className="px-carousel-arrow-width">
         <Separator className="mt-6" />
@@ -64,11 +62,11 @@ export default function Content({ initData }: { initData: Post }) {
       </section>
       <section className="w-full grow px-carousel-arrow-width flex flex-col min-h-[200px]">
         <header className="font-bold text-xl mt-4">
-          {`${post.comment_count?.toLocaleString()} ${
-            post.comment_count === 1 ? "Comment" : "Comments"
+          {`${post.commentCount?.toLocaleString()} ${
+            post.commentCount === 1 ? "Comment" : "Comments"
           } `}
         </header>
-        <Comments post_uid={post.uid} className="px-0" />
+        <Comments post_uid={post.postUid} className="px-0" />
       </section>
     </main>
   );

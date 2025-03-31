@@ -1,58 +1,78 @@
 import { array, number, string, z } from "zod";
 
-export const HydraDataSchema = z.object({
-  profile: z.object({
-    uid: z.string(),
-    username: z.string(),
-    name: z.string(),
-    imageURL: z.string().nullable(),
-  }),
-});
-
-export type HydraData = z.infer<typeof HydraDataSchema>;
-
-export const ImageRowSchema = z.object({
-  id: number().optional(),
-  filename: string(),
-  created_at: string().datetime().optional(),
-  post_uid: string(),
-});
-
-export type ImageRow = z.infer<typeof ImageRowSchema>;
-
 export const ProfileSchema = z.object({
-  uid: z.string(),
+  userUid: z.string(),
   username: z.string(),
   name: z.string(),
-  imageURL: z.string().nullable(),
-  post_count: number(),
-  follower_count: number(),
-  followee_count: number(),
-  has_followed: z.boolean(),
+  profileImageUrl: z.string().nullable(),
+  followerCount: number(),
+  followeeCount: number(),
+  postCount: number(),
+  isFollowing: z.boolean(),
 });
-
 export type Profile = z.infer<typeof ProfileSchema>;
 
-export const PostSchema = z.object({
-  uid: z.string(),
-  created_at: z.string().datetime(),
-  description: z.string().nullable(),
-  comment_count: z.number().nullable(),
-  like_count: z.number(),
-  imageURLs: array(z.string()),
-  owner: z.object({
-    username: z.string(),
-    name: z.string(),
-    uid: z.string(),
-    has_followed: z.boolean(),
-    imageURL: z.string().nullable(),
-    bioURL: z.string(),
-  }),
-  has_liked: z.boolean(),
-  is_owner: z.boolean(),
+export const ProfileImageSchema = z.object({
+  profileImageUrl: z.string().nullable(),
 });
 
+export type ProfileImage = z.infer<typeof ProfileImageSchema>;
+
+export const OwnerProfileSchema = z.object({
+  userUid: z.string(),
+  username: z.string(),
+  name: z.string(),
+  profileImageUrl: z.string().nullable(),
+  isFollowing: z.boolean(),
+});
+export type OwnerProfile = z.infer<typeof OwnerProfileSchema>;
+
+export const PostSchema = z.object({
+  postUid: z.string(),
+  createdAt: z.string().datetime(),
+  content: z.string().nullable(),
+  commentCount: z.number().nullable(),
+  likeCount: z.number(),
+  imageUrls: array(z.string()),
+  owner: OwnerProfileSchema,
+  hasLiked: z.boolean(),
+  isOwner: z.boolean(),
+});
 export type Post = z.infer<typeof PostSchema>;
+
+export const PostArraySchema = z.array(PostSchema);
+
+export const authProfileSchema = z.object({
+  username: z.string(),
+  userUid: z.string(),
+  name: z.string(),
+  profileImageUrl: z.string().nullable(),
+});
+export type AuthProfile = z.infer<typeof authProfileSchema>;
+
+export const commentSchema = z.object({
+  commentUid: z.string(),
+  createdAt: string().datetime(),
+  content: z.string(),
+  hasLiked: z.boolean(),
+  likeCount: z.number(),
+  owner: authProfileSchema,
+});
+export type PostComment = z.infer<typeof commentSchema>;
+
+export const commentPageSchema = z.object({
+  data: array(commentSchema),
+  nextCursor: number().nullable(),
+});
+export type CommentPage = z.infer<typeof commentPageSchema>;
+
+export const postPageSchema = z.object({
+  data: array(PostSchema),
+  nextCursor: number().nullable(),
+});
+export type PostPage = z.infer<typeof postPageSchema>;
+
+export type PostRow = z.infer<typeof postDbSchema>;
 
 export const postDbSchema = z.object({
   uid: string(),
@@ -61,37 +81,12 @@ export const postDbSchema = z.object({
   from_uid: string(),
 });
 
-export type PostRow = z.infer<typeof postDbSchema>;
-
-export const postPageSchema = z.object({
-  posts: array(PostSchema),
-  nextCursor: number().optional(),
-});
-
-export type PostPage = z.infer<typeof postPageSchema>;
-
-export const commentSchema = z.object({
-  uid: z.string(),
-  created_at: string().datetime(),
-  comment: z.string(),
-  has_liked: z.boolean(),
-  like_count: z.number(),
-  from_user: z.object({
-    uid: z.string(),
-    username: z.string(),
-    name: z.string(),
-    imageURL: z.string().nullable(),
-  }),
-});
-
-export type UserComment = z.infer<typeof commentSchema>;
-
 export const friendSchema = z.object({
   uid: z.string(),
   username: z.string(),
   name: z.string(),
   imageURL: z.string(),
-  has_followed: z.boolean(),
+  hasFollowed: z.boolean(),
 });
 
 export const friendPageSchema = z.object({
@@ -137,3 +132,12 @@ export const signInSchema = signUpSchema.pick({ email: true, password: true });
 export const verifySchema = signUpSchema
   .pick({ email: true })
   .extend({ token: z.string().length(6) });
+
+export const ImageRowSchema = z.object({
+  id: number().optional(),
+  filename: string(),
+  created_at: string().datetime().optional(),
+  post_uid: string(),
+});
+
+export type ImageRow = z.infer<typeof ImageRowSchema>;

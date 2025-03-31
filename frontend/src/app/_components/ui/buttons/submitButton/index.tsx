@@ -18,6 +18,7 @@ export default function SubmitButton({
   const { pending } = useFormStatus();
   return (
     <button
+      type="submit"
       className={twMerge(
         "bg-blue-500 h-[45px] rounded-md text-white disabled:bg-gray-400 flex items-center justify-center",
         className,

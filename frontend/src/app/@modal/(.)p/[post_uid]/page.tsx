@@ -23,9 +23,9 @@ export default function Page({
       enabled: false,
     })),
     combine: (results) =>
-      results.flatMap((result) =>
-        (result.data as any).pages.flatMap((page: any) => page.posts)
-      ),
+      results.flatMap((result) => {
+        return (result.data as any).pages.flatMap((page: any) => page.data);
+      }),
   });
 
   const post = findPost(post_uid, results);
@@ -39,6 +39,6 @@ export default function Page({
 }
 
 function findPost(post_uid: string, posts: Post[]): Post {
-  const post = posts.find((post) => post.uid === post_uid);
+  const post = posts.find((post) => post.postUid === post_uid);
   return post!;
 }

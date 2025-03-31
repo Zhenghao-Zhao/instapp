@@ -1,0 +1,12 @@
+# Ignore everything
+**
+
+# Include all .go files
+!*.go
+
+# Include directories with .go files
+!**/*.go
+
+# Optionally, include other necessary files (like go.mod and go.sum)
+!go.mod
+!go.sum

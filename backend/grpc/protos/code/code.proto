@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package grpc.protos.code;
+
+option go_package = "github.com/zhenghao-zhao/instapp/grpc/protos/code/generated";
+
+service CodeService {
+    rpc ExecuteCode(CodeRequest) returns (CodeResponse){};
+}
+
+message CodeRequest {
+    string code = 1;
+}
+
+message CodeResponse {
+    bool isSuccess = 2;
+    string result = 3;
+}

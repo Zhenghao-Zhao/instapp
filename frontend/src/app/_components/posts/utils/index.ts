@@ -1,9 +1,9 @@
-import { Post, UserComment } from "@/app/_libs/types";
+import { Post, PostComment } from "@/app/_libs/types";
 import { QueryClient } from "@tanstack/react-query";
 
 export async function optDeletePost(
   queryClient: QueryClient,
-  post_uid: string
+  post_uid: string,
 ) {
   await queryClient.cancelQueries({ queryKey: ["posts"] });
 
@@ -14,15 +14,15 @@ export async function optDeletePost(
       if ("pages" in data) {
         const newPages = data.pages.map((page: any) => {
           const newPosts = page.posts.filter(
-            (post: Post) => post.uid !== post_uid
+            (post: Post) => post.postUid !== post_uid,
           );
           return { ...page, posts: newPosts };
         });
         return { ...data, pages: newPages };
       } else if (data.uid === post_uid) {
-        return data.filter((post: Post) => post.uid !== post_uid);
+        return data.filter((post: Post) => post.postUid !== post_uid);
       }
-    }
+    },
   );
   const prevData = queryClient.getQueriesData({ queryKey: ["posts"] });
   return { prevData };
@@ -30,8 +30,8 @@ export async function optDeletePost(
 
 export async function optAddComment(
   queryClient: QueryClient,
-  comment: UserComment,
-  queryKey: string
+  comment: PostComment,
+  queryKey: string,
 ) {
   const prevData: any = queryClient.getQueryData(["comments", queryKey]);
   if (!prevData) {
@@ -57,7 +57,7 @@ export async function optUpdatePaginatedList<T>(
   update: Partial<T>,
   queryKey: string,
   pageNum: number,
-  index: number
+  index: number,
 ) {
   await queryClient.cancelQueries({ queryKey: [listName, queryKey] });
   const prevData: any = queryClient.getQueryData([listName, queryKey]);
@@ -86,7 +86,7 @@ export async function optUpdatePaginatedList<T>(
 export async function batchUpdatePosts(
   queryClient: QueryClient,
   update: Partial<Post>,
-  post_uid: string
+  post_uid: string,
 ) {
   await queryClient.cancelQueries({ queryKey: ["posts"] });
 
@@ -97,7 +97,7 @@ export async function batchUpdatePosts(
       if ("pages" in data) {
         const newPages = data.pages.map((page: any) => {
           const newPosts = page.posts.map((post: Post) =>
-            post.uid === post_uid ? { ...post, ...update } : post
+            post.postUid === post_uid ? { ...post, ...update } : post,
           );
           return { ...page, posts: newPosts };
         });
@@ -105,7 +105,7 @@ export async function batchUpdatePosts(
       } else if (data.uid === post_uid) {
         return { ...data, ...update };
       }
-    }
+    },
   );
   const prevData = queryClient.getQueriesData({ queryKey: ["posts"] });
   return { prevData };

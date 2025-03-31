@@ -16,7 +16,7 @@ export default function useFetchExplorePosts(initialData: any) {
     });
   const posts = useMemo(() => {
     if (!data) return [];
-    const allPosts: Post[] = data.pages.flatMap((page) => page.posts);
+    const allPosts: Post[] = data.pages.flatMap((page) => page.data);
     return allPosts;
   }, [data]);
 

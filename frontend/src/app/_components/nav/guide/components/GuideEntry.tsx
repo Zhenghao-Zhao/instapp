@@ -11,7 +11,7 @@ export type GuideEntryProps = {
 };
 
 export function GuideEntry({ icon, title, url, image }: GuideEntryProps) {
-  const { data } = useDataContext();
+  const { authProfile: data } = useDataContext();
   const pathname = usePathname();
   return (
     <IconLink

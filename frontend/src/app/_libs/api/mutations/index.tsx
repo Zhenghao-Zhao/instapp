@@ -1,8 +1,8 @@
-import api from "@/config";
-import { UserComment } from "../../types";
+import { clientApi } from "@/app/_api/axios";
+import { PostComment } from "../../types";
 
 export function handleAddPost(formData: FormData) {
-  return api.post("posts", formData);
+  return clientApi.post("post/create", formData);
 }
 
 export function handleToggleLike({
@@ -13,12 +13,12 @@ export function handleToggleLike({
   has_liked: boolean;
 }) {
   return has_liked
-    ? api.post(`posts/${post_uid}/like`)
-    : api.post(`posts/${post_uid}/unlike`);
+    ? clientApi.post(`post/${post_uid}/like`)
+    : clientApi.post(`post/${post_uid}/unlike`);
 }
 
 export function handleDeletePost(post_uid: string) {
-  return api.delete(`posts/${post_uid}`);
+  return clientApi.delete(`post/${post_uid}`);
 }
 
 export function handleToggleFollow({
@@ -29,12 +29,15 @@ export function handleToggleFollow({
   to_follow: boolean;
 }) {
   return to_follow
-    ? api.post(`friendship/add/${uid}`)
-    : api.post(`friendship/remove/${uid}`);
+    ? clientApi.post(`friend/${uid}/add`)
+    : clientApi.post(`friend/${uid}/remove`);
 }
 
 export function handleAddComment(post_uid: string, formData: FormData) {
-  return api.post<UserComment>(`posts/${post_uid}/comments/add`, formData);
+  return clientApi.post<PostComment>(
+    `posts/${post_uid}/comments/add`,
+    formData,
+  );
 }
 
 export function handleToggleLikeComment({
@@ -45,6 +48,6 @@ export function handleToggleLikeComment({
   to_like: boolean;
 }) {
   return to_like
-    ? api.post(`comments/${comment_uid}/like`)
-    : api.post(`comments/${comment_uid}/unlike`);
+    ? clientApi.post(`comment/${comment_uid}/like`)
+    : clientApi.post(`comment/${comment_uid}/unlike`);
 }

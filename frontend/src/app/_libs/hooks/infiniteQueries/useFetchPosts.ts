@@ -1,30 +1,34 @@
+import { clientApi } from "@/app/_api/axios";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { getUserPosts } from "../../api/queries";
-import { Post } from "../../types";
+import { Post, postPageSchema } from "../../types";
 
-export default function useFetchPosts(uid: string, initialData: any) {
-  const { data, error, fetchNextPage, hasNextPage, isFetching } =
-    useInfiniteQuery({
-      queryKey: ["posts", "infinite", "home", uid],
-      queryFn: ({ pageParam }) => getUserPosts(pageParam, uid),
-      initialPageParam: 0,
-      getNextPageParam: (lastPage, _pages) => lastPage.nextCursor,
-      staleTime: 1000 * 60 * 5,
-      refetchInterval: 1000 * 60 * 5,
-      initialData,
-    });
+export default function useFetchPosts(username: string) {
+  const query = useInfiniteQuery({
+    queryKey: ["posts", "infinite", "home", username],
+    queryFn: ({ pageParam }) => getUserPosts(pageParam, username),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, _pages) => lastPage.nextCursor,
+    staleTime: 1000 * 6 * 5,
+    refetchInterval: 1000 * 60 * 5,
+  });
   const posts = useMemo(() => {
-    if (!data) return [];
-    const allPosts: Post[] = data.pages.flatMap((page) => page.posts);
+    if (!query.data) return [];
+    const allPosts: Post[] = query.data.pages.flatMap((page) => page.data);
     return allPosts;
-  }, [data]);
+  }, [query.data]);
+
+  if (query.error) {
+    throw new Error("Failed to retrieve posts, please try again later");
+  }
 
   return {
-    isFetching,
+    query,
     posts,
-    error,
-    hasNextPage,
-    fetchNextPage,
   };
 }
+
+const getUserPosts = async (pageParam: number, username: string) => {
+  const result = await clientApi.get(`${username}/posts?page=${pageParam}`);
+  return postPageSchema.parse(result.data.payload);
+};

@@ -1,23 +1,15 @@
 "use client";
-import { createClient } from "@/app/_libs/utils/supabase/client";
-import {
-  PropsWithChildren,
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
-import { HydraData } from "../../types";
+import { PropsWithChildren, createContext, useContext, useState } from "react";
+import { AuthProfile } from "../../types";
 
 type DataContextType = {
-  data: HydraData;
-  setData: (data: HydraData) => void;
+  authProfile: AuthProfile;
+  setAuthProfile: (data: AuthProfile) => void;
 };
 
-type Props = PropsWithChildren<{ data: HydraData }>;
+type Props = PropsWithChildren<{ authProfileData: AuthProfile }>;
 
 export const DataContext = createContext<DataContextType | null>(null);
-const supabase = createClient();
 
 export function useDataContext() {
   const value = useContext(DataContext);
@@ -25,25 +17,27 @@ export function useDataContext() {
   return value;
 }
 export default function DataContextProvider({
-  data: serverData,
+  authProfileData,
   children,
 }: Props) {
-  const [data, setData] = useState<HydraData>(serverData);
+  const [data, setData] = useState<AuthProfile>(authProfileData);
 
-  useEffect(() => {
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session && data) {
-        window.location.reload();
-        return;
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, [data]);
+  // useEffect(() => {
+  //   const {
+  //     data: { subscription },
+  //   } = supabase.auth.onAuthStateChange((_event, session) => {
+  //     if (!session && data) {
+  //       window.location.reload();
+  //       return;
+  //     }
+  //   });
+  //   return () => subscription.unsubscribe();
+  // }, [data]);
 
   return (
-    <DataContext.Provider value={{ data, setData }}>
+    <DataContext.Provider
+      value={{ authProfile: data, setAuthProfile: setData }}
+    >
       {children}
     </DataContext.Provider>
   );

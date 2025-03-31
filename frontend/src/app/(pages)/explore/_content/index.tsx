@@ -21,7 +21,11 @@ export default function Content({
       <div className="grid gap-2 grid-cols-3 w-full">
         {posts.map((post: Post, j: number) => {
           return (
-            <Link href={getAbsoluteURL(`p/${post.uid}`)} key={j} scroll={false}>
+            <Link
+              href={getAbsoluteURL(`p/${post.postUid}`)}
+              key={j}
+              scroll={false}
+            >
               <PostEntry post={post} />
             </Link>
           );

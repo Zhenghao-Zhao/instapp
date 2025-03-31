@@ -1,0 +1,3 @@
+DROP TABLE followers CASCADE;
+
+

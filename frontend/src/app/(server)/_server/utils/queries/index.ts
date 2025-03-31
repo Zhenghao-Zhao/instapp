@@ -229,7 +229,7 @@ export async function getExplorePosts(
     return { data, error };
   }
 
-  const posts: Post[] = data.map((post) => {
+  const posts: Post[] = data.map((post: Post) => {
     return mapPostData(post, from_uid);
   });
 

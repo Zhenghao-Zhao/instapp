@@ -33,11 +33,11 @@ export async function GET(
     uid: data.ret_uid,
     username: data.ret_username,
     name: data.ret_name,
-    imageURL: imageURL,
-    post_count: data.ret_post_count,
-    follower_count: data.ret_follower_count,
-    followee_count: data.ret_followee_count,
-    has_followed: data.ret_has_followed,
+    profileImageURL: imageURL,
+    postCount: data.ret_post_count,
+    followerCount: data.ret_follower_count,
+    followeeCount: data.ret_followee_count,
+    isFollowing: data.ret_has_followed,
   };
 
   return NextResponse.json(profile, { status: STATUS_CODES.OK });

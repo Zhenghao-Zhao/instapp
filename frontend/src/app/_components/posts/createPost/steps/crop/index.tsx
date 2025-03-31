@@ -1,7 +1,7 @@
 import AdjustableImage from "../../components/AdjustableImage";
 import CarouselWrapper from "../../components/CarouselWrapper";
 import UploadHeader from "../../components/UploadHeader";
-import { ImageInfo, Transform } from "../../lib";
+import { ImageInfo, Transform } from "../../utils";
 
 const TITLE = "Crop";
 

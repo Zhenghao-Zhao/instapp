@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SqlDialectMappings">
+    <file url="file://$PROJECT_DIR$/migrations/20250127063514_remove_users_uid_not_null.down.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/migrations/20250127063514_remove_users_uid_not_null.up.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/migrations/20250127095456_add_posts_col_uid.up.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/migrations/20250127101951_remove_comments_col_user_id.down.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/migrations/20250127101951_remove_comments_col_user_id.up.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/migrations/20250127102008_add_comments_col_post_id.down.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/migrations/20250127102008_add_comments_col_post_id.up.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/migrations/20250127125737_create_function_get_profile_by_user_id.up.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/migrations/20250128180640_move_username_from_users_to_profiles.down.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/migrations/20250128180640_move_username_from_users_to_profiles.up.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/migrations/20250128193123_rename_image_column_image_uid_to_uid.down.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/migrations/20250128193123_rename_image_column_image_uid_to_uid.up.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/migrations/20250128193418_modify_get_user_profiles_function.up.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/migrations/20250128201836_modify_get_user_profiles_function_fix.up.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/migrations/20250129063758_create_fts_on_profiles.down.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/migrations/20250129063758_create_fts_on_profiles.up.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/migrations/20250131090737_move_username_from_profiles_to_users.down.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/migrations/20250131090737_move_username_from_profiles_to_users.up.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/queries.sql" dialect="PostgreSQL" />
+    <file url="PROJECT" dialect="PostgreSQL" />
+  </component>
+</project>

@@ -1,7 +1,6 @@
+import useCreatePost from "@/app/_api/hooks/useCreatePost";
 import { Spinner } from "@/app/_components/ui/loaders";
-import { handleAddPost } from "@/app/_libs/api/mutations";
 import { useModalContext } from "@/app/_libs/contexts/providers/ModalContextProivder";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import React, { useMemo, useState } from "react";
 import CarouselWrapper from "../../components/CarouselWrapper";
 import UploadHeader from "../../components/UploadHeader";
@@ -23,16 +22,8 @@ export default function Finalize({
   changeCurrentImageIndex: (i: number) => void;
 }) {
   const [caption, setCaption] = useState("");
-  const { setAlertOnClose } = useModalContext();
-  const queryClient = useQueryClient();
 
-  const { mutate, isPending } = useMutation({
-    mutationFn: (formData: FormData) => handleAddPost(formData),
-    onSuccess: () => {
-      queryClient.invalidateQueries();
-      setAlertOnClose(false);
-    },
-  });
+  const { mutate, isPending } = useCreatePost();
 
   const blobURLs = useMemo(() => {
     return uploadImages.map((blob) => URL.createObjectURL(blob));
@@ -41,9 +32,9 @@ export default function Finalize({
   const handleSubmit = async () => {
     const formData = new FormData();
     for (const blob of uploadImages) {
-      formData.append("file", blob);
+      formData.append("files", blob);
     }
-    formData.append("text", caption);
+    formData.append("content", caption);
     mutate(formData);
     goNext();
   };

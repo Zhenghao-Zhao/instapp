@@ -19,9 +19,9 @@ export default function FollowButton({
   ...props
 }: Props) {
   const queryClient = useQueryClient();
-  const { data: serverData } = useDataContext();
+  const { authProfile } = useDataContext();
   const [isFollowing, setIsFollowing] = useState(has_followed);
-  const from_uid = serverData.profile.uid;
+  const from_uid = authProfile.userUid;
   const { mutate, isPending } = useMutation({
     mutationFn: handleToggleFollow,
     onSuccess: async (data) => {
@@ -37,7 +37,7 @@ export default function FollowButton({
 
       if (from_prevData) {
         const from_followeeCount =
-          from_prevData.followee_count + (has_followed ? 1 : -1);
+          from_prevData.followeeCount + (has_followed ? 1 : -1);
 
         queryClient.setQueryData(["userProfile", from_uid], {
           ...from_prevData,
@@ -47,7 +47,7 @@ export default function FollowButton({
 
       if (to_prevData) {
         const to_followerCount =
-          to_prevData.follower_count + (has_followed ? 1 : -1);
+          to_prevData.followerCount + (has_followed ? 1 : -1);
 
         queryClient.setQueryData(["userProfile", to_uid], {
           ...to_prevData,

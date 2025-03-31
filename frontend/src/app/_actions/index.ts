@@ -9,6 +9,8 @@ import { createClient } from "@/app/_libs/utils/supabase/server";
 import { randomUUID } from "crypto";
 import sharp from "sharp";
 import { signInSchema, signUpSchema, verifySchema } from "../_libs/types";
+import { fromError, INIT_API_ERROR } from "../_api/utils";
+import { serverApi } from "../_api/axios";
 
 export async function addProfileImage(formData: FormData) {
   const file = formData.get("profileImage") as File;
@@ -78,28 +80,39 @@ export async function signUp(_prevState: any, formData: FormData) {
 
   if (!result.success) {
     return {
-      error: result.error.issues[0].message,
-      message: "",
+      error: result.error,
+      message: result.error.issues[0].message,
     };
   }
 
-  const supabase = createClient();
-  const { error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: {
-        username,
-        name,
-      },
-    },
-  });
-  if (error)
-    return {
-      error: error.message,
-      message: "",
-    };
-  return { error: null, message: "Success" };
+  try {
+    await serverApi.post("registration", {
+      email,
+      password,
+      name,
+      username,
+    });
+  } catch (error) {
+    return fromError(error);
+  }
+
+  // const supabase = createClient();
+  // const { error } = await supabase.auth.signUp({
+  //   email,
+  //   password,
+  //   options: {
+  //     data: {
+  //       username,
+  //       name,
+  //     },
+  //   },
+  // });
+  // if (error)
+  //   return {
+  //     error: error.message,
+  //     message: "",
+  //   };
+  return INIT_API_ERROR;
 }
 
 export async function signIn(_prevState: any, formData: FormData) {
@@ -109,34 +122,61 @@ export async function signIn(_prevState: any, formData: FormData) {
   const result = signInSchema.safeParse({ email, password });
   if (!result.success) {
     return {
-      error: result.error.issues[0].message,
-      message: "",
+      error: result.error,
+      message: result.error.issues[0].message,
     };
   }
+  // await api.get("foo");
+  // try {
+  //   const resp = await fetch("http://server:5001/signin", {
+  //     method: "POST",
+  //     headers: { "Content-Type": "application/json" },
+  //     body: JSON.stringify({ email, password }),
+  //   });
+  //   const data = await resp.json();
+  //   console.log(data);
+  // } catch (error) {
+  //   console.log(error);
+  //   return handleApiError(error);
+  // }
 
-  const supabase = createClient();
-  const { error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
-  if (error)
-    return {
-      error: error.message,
-      message: "",
-    };
-  return { error: null, message: "Success" };
+  try {
+    const resp = await serverApi.post("signin", {
+      email,
+      password,
+    });
+  } catch (error) {
+    return fromError(error);
+  }
+
+  // const supabase = createClient();
+  // const { error } = await supabase.auth.signInWithPassword({
+  //   email,
+  //   password,
+  // });
+  // if (error)
+  //   return {
+  //     error: error.message,
+  //     message: "",
+  //   };
+  return INIT_API_ERROR;
 }
 
 export async function signOut() {
-  const supabase = createClient();
-  const { error } = await supabase.auth.signOut();
-  if (error) {
-    return {
-      error: error.message,
-      message: "",
-    };
+  try {
+    await serverApi.post("signout");
+  } catch (error) {
+    return fromError(error);
   }
-  return { error: null, message: "Success" };
+  // const supabase = createClient();
+  // const { error } = await supabase.auth.signOut();
+  // if (error) {
+  //   return {
+  //     error: error.message,
+  //     message: "",
+  //   };
+  // }
+  return INIT_API_ERROR;
 }
 
 export async function verifyEmail(_prevState: any, formData: FormData) {

@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { LoginForm } from "./forms/signInForm";
+import { SigninForm } from "./forms/signInForm";
 import { SignUpForm } from "./forms/signUpForm";
 
 export default function Auth() {
@@ -14,7 +14,7 @@ export default function Auth() {
       <div className={`bg-background-primary flex flex-col rounded-md p-4`}>
         <div className="border-b pb-4">
           {isSignUp && <SignUpForm />}
-          {!isSignUp && <LoginForm />}
+          {!isSignUp && <SigninForm />}
         </div>
         <button
           onClick={() => setIsSignUp((prev) => !prev)}

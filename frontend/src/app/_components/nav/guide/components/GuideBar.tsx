@@ -11,8 +11,8 @@ type Props = {
 
 export default function GuideBar({ className }: Props) {
   const { guideLayout } = useGuidebarContext();
-  const { data: serverData } = useDataContext();
-  const username = serverData.profile.username;
+  const { authProfile: authProfile } = useDataContext();
+  const username = authProfile.username;
   const sections = getGuideData(username);
 
   return (
@@ -135,5 +135,3 @@ function getGuideData(username: string) {
 
   return guideData;
 }
-
-function getEntryIdFromPathname(pathname: string) {}

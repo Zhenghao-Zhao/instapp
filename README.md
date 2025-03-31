@@ -1,1 +1,1 @@
-# insta-app
+# instapp

@@ -114,7 +114,7 @@ export function getCountability(
 }
 
 export function getAbsoluteURL(subdomain: string) {
-  return process.env.NEXT_PUBLIC_BASE_URL + "/" + subdomain;
+  return process.env.NEXT_PUBLIC_ORIGIN_URL + "/" + subdomain;
 }
 
 export function throttle<F extends (...args: any[]) => any>(

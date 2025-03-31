@@ -20,7 +20,7 @@ export async function deleteCloudImage(filename: string) {
 }
 
 export function getImageURLFromFilename(filename: string) {
-  return filename && ENV.R2_BUCKET_URL_PUBLIC + "/" + filename;
+  return ENV.R2_BUCKET_URL_PUBLIC + "/" + filename;
 }
 
 export function getOwnerURL(ownerUsername: string) {
