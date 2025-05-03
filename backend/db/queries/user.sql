@@ -8,6 +8,16 @@ RETURNING
 DELETE FROM users
 WHERE id = @id;
 
+-- name: CheckUserExistsByUsername :one
+SELECT
+    EXISTS (
+        SELECT
+            1
+        FROM
+            users
+        WHERE
+            username = @username) AS exists;
+
 -- name: CheckUserExistsByEmail :one
 SELECT
     EXISTS (
@@ -23,7 +33,6 @@ SELECT
     u.username,
     u.id,
     p.name,
-    u.uid,
     p.profile_image,
     u.email,
     u.password
@@ -35,26 +44,33 @@ WHERE
 
 -- name: SearchPaginatedUsers :many
 SELECT
-    user_uid,
-    username,
-    name,
-    profile_image
+    u.user_id,
+    u.username,
+    u.name,
+    u.profile_image
 FROM
-    user_profile_search
+    user_profile_search u
 WHERE
-    search_param @@ to_tsquery(@search_query || ':*') OFFSET sqlc.arg ('offset')
+    CASE WHEN @search_query = '' THEN
+        TRUE
+    ELSE
+        search_param @@ to_tsquery(@search_query || ':*')
+    END
+    AND (@last_username::text = '0'
+        OR u.username > @last_username::text)
+ORDER BY
+    u.username
 LIMIT sqlc.arg ('limit');
 
 -- name: GetAuthProfile :one
 SELECT
     u.username,
     p.name,
-    u.uid,
+    u.id AS user_id,
     p.profile_image AS profile_image
 FROM
     users u
     LEFT JOIN profiles p ON u.id = p.user_id
 WHERE
     u.id = @my_user_id;
-
 

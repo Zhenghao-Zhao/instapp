@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"errors"
-	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -12,13 +11,15 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const (
-	PostPageLimit     = 9
-	FollowerPageLimit = 20
-	CommentPageLimit  = 10
-)
-
 var NilUid string = uuid.Nil.String()
+
+func GetPaginationParams(pageNum int, itemsPerPage int32) (offset, limit int32) {
+	if pageNum < 0 {
+		pageNum = 0
+	}
+	offset = int32(pageNum) * itemsPerPage
+	return offset, itemsPerPage
+}
 
 func GetQueryParam(r *http.Request, name string) string {
 	queryParams := r.URL.Query()
@@ -32,6 +33,12 @@ func GetPageNumParam(r *http.Request) (int, error) {
 	return strconv.Atoi(result)
 }
 
+func GetCursorParam(r *http.Request) (int64, error) {
+	result := GetQueryParam(r, "cursor")
+	num, err := strconv.ParseInt(result, 10, 64)
+	return num, err
+}
+
 func ParseUidString(uid string) (result uuid.UUID, err error) {
 	err = result.Scan(uid)
 	return
@@ -41,23 +48,31 @@ func GetRouteSegment(r *http.Request, name string) (string, error) {
 	vars := mux.Vars(r)
 	value, exists := vars[name]
 	if !exists {
-		return value, errors.New("Route segment not found")
+		return value, errors.New("route segment not found")
 	}
 	return value, nil
 }
 
-func GetUidFromRoute(r *http.Request, name string) (uuid.UUID, error) {
+func GetIdFromRoute(r *http.Request, name string) (int64, error) {
 	vars := mux.Vars(r)
 	val := vars[name]
-	var uid uuid.UUID
-	err := uid.Scan(val)
-	if err != nil {
-		log.Printf("failed to scan uid from route:%v", err.Error())
-	}
-
-	return uid, err
+	id, err := strconv.ParseInt(val, 10, 64)
+	return id, err
 }
 
 func ConvertTime(t pgtype.Timestamptz) string {
 	return t.Time.Format(time.RFC3339)
+}
+
+func ConvertIds(ids []string) ([]int64, error) {
+	rst := make([]int64, len(ids))
+	for i, id := range ids {
+		val, err := strconv.ParseInt(id, 10, 64)
+		if err != nil {
+			return rst, err
+		}
+		rst[i] = val
+	}
+
+	return rst, nil
 }

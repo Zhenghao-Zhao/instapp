@@ -29,11 +29,29 @@ func (q *Queries) CheckUserExistsByEmail(ctx context.Context, email string) (boo
 	return exists, err
 }
 
+const checkUserExistsByUsername = `-- name: CheckUserExistsByUsername :one
+SELECT
+    EXISTS (
+        SELECT
+            1
+        FROM
+            users
+        WHERE
+            username = $1) AS exists
+`
+
+func (q *Queries) CheckUserExistsByUsername(ctx context.Context, username string) (bool, error) {
+	row := q.db.QueryRow(ctx, checkUserExistsByUsername, username)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (username, email, PASSWORD)
     VALUES ($1, $2, $3)
 RETURNING
-    id, created_at, uid, email, password, username
+    id, created_at, email, password, username
 `
 
 type CreateUserParams struct {
@@ -48,7 +66,6 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (*User, 
 	err := row.Scan(
 		&i.ID,
 		&i.CreatedAt,
-		&i.Uid,
 		&i.Email,
 		&i.Password,
 		&i.Username,
@@ -61,7 +78,7 @@ DELETE FROM users
 WHERE id = $1
 `
 
-func (q *Queries) DeleteUser(ctx context.Context, id int32) error {
+func (q *Queries) DeleteUser(ctx context.Context, id int64) error {
 	_, err := q.db.Exec(ctx, deleteUser, id)
 	return err
 }
@@ -70,7 +87,7 @@ const getAuthProfile = `-- name: GetAuthProfile :one
 SELECT
     u.username,
     p.name,
-    u.uid,
+    u.id AS user_id,
     p.profile_image AS profile_image
 FROM
     users u
@@ -82,17 +99,17 @@ WHERE
 type GetAuthProfileRow struct {
 	Username     string    `json:"username"`
 	Name         *string   `json:"name"`
-	Uid          uuid.UUID `json:"uid"`
+	UserID       int64     `json:"user_id"`
 	ProfileImage uuid.UUID `json:"profile_image"`
 }
 
-func (q *Queries) GetAuthProfile(ctx context.Context, myUserID int32) (*GetAuthProfileRow, error) {
+func (q *Queries) GetAuthProfile(ctx context.Context, myUserID int64) (*GetAuthProfileRow, error) {
 	row := q.db.QueryRow(ctx, getAuthProfile, myUserID)
 	var i GetAuthProfileRow
 	err := row.Scan(
 		&i.Username,
 		&i.Name,
-		&i.Uid,
+		&i.UserID,
 		&i.ProfileImage,
 	)
 	return &i, err
@@ -103,7 +120,6 @@ SELECT
     u.username,
     u.id,
     p.name,
-    u.uid,
     p.profile_image,
     u.email,
     u.password
@@ -116,9 +132,8 @@ WHERE
 
 type GetUserByEmailRow struct {
 	Username     string    `json:"username"`
-	ID           int32     `json:"id"`
+	ID           int64     `json:"id"`
 	Name         *string   `json:"name"`
-	Uid          uuid.UUID `json:"uid"`
 	ProfileImage uuid.UUID `json:"profile_image"`
 	Email        string    `json:"email"`
 	Password     string    `json:"password"`
@@ -131,7 +146,6 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (*GetUserByE
 		&i.Username,
 		&i.ID,
 		&i.Name,
-		&i.Uid,
 		&i.ProfileImage,
 		&i.Email,
 		&i.Password,
@@ -141,32 +155,40 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (*GetUserByE
 
 const searchPaginatedUsers = `-- name: SearchPaginatedUsers :many
 SELECT
-    user_uid,
-    username,
-    name,
-    profile_image
+    u.user_id,
+    u.username,
+    u.name,
+    u.profile_image
 FROM
-    user_profile_search
+    user_profile_search u
 WHERE
-    search_param @@ to_tsquery($1 || ':*') OFFSET $2
+    CASE WHEN $1 = '' THEN
+        TRUE
+    ELSE
+        search_param @@ to_tsquery($1 || ':*')
+    END
+    AND ($2::text = '0'
+        OR u.username > $2::text)
+ORDER BY
+    u.username
 LIMIT $3
 `
 
 type SearchPaginatedUsersParams struct {
-	SearchQuery *string `json:"search_query"`
-	Offset      int32   `json:"offset"`
-	Limit       int32   `json:"limit"`
+	SearchQuery  interface{} `json:"search_query"`
+	LastUsername string      `json:"last_username"`
+	Limit        int32       `json:"limit"`
 }
 
 type SearchPaginatedUsersRow struct {
-	UserUid      uuid.UUID `json:"user_uid"`
+	UserID       int64     `json:"user_id"`
 	Username     string    `json:"username"`
 	Name         *string   `json:"name"`
 	ProfileImage uuid.UUID `json:"profile_image"`
 }
 
 func (q *Queries) SearchPaginatedUsers(ctx context.Context, arg SearchPaginatedUsersParams) ([]*SearchPaginatedUsersRow, error) {
-	rows, err := q.db.Query(ctx, searchPaginatedUsers, arg.SearchQuery, arg.Offset, arg.Limit)
+	rows, err := q.db.Query(ctx, searchPaginatedUsers, arg.SearchQuery, arg.LastUsername, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +197,7 @@ func (q *Queries) SearchPaginatedUsers(ctx context.Context, arg SearchPaginatedU
 	for rows.Next() {
 		var i SearchPaginatedUsersRow
 		if err := rows.Scan(
-			&i.UserUid,
+			&i.UserID,
 			&i.Username,
 			&i.Name,
 			&i.ProfileImage,

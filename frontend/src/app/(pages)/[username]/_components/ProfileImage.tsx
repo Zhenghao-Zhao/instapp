@@ -1,4 +1,4 @@
-import { STATIC_PATHS } from "@/app/_libs/constants";
+import { STATIC_PATHS } from "@/app/_libs/vars/constants";
 import Image from "next/image";
 import { twMerge } from "tailwind-merge";
 

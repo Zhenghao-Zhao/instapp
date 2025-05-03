@@ -3,15 +3,14 @@ import { useCallback, useRef } from "react";
 export type IntersectionObserverType = {
   onIntersect: () => void;
   onHidden?: () => void;
-  isReady?: boolean; 
-}
+  isReady?: boolean;
+};
 
 export default function useIntersectionObserver({
   onIntersect,
   onHidden,
-  isReady=true,
-}: IntersectionObserverType)
-{
+  isReady = true,
+}: IntersectionObserverType) {
   const observer = useRef<IntersectionObserver>();
   const observerRef = useCallback(
     (node: HTMLElement | null) => {
@@ -27,7 +26,7 @@ export default function useIntersectionObserver({
       });
       observer.current.observe(node);
     },
-    [isReady, onIntersect, onHidden]
+    [isReady, onIntersect, onHidden],
   );
   return observerRef;
 }

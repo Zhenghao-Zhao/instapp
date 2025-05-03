@@ -2,17 +2,20 @@ package controllers
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/google/uuid"
-	"github.com/gorilla/mux"
-	"github.com/zhenghao-zhao/instapp/app/utils/api"
-	"github.com/zhenghao-zhao/instapp/app/utils/auth"
+	"github.com/zhenghao-zhao/instapp/app/api"
+	"github.com/zhenghao-zhao/instapp/app/auth"
 	db "github.com/zhenghao-zhao/instapp/db/sqlc"
 	"golang.org/x/sync/errgroup"
+)
+
+const (
+	PostPageLimit = 9
+	FeedPageLimit = 9
 )
 
 func (s *Server) CreatePostHandler() http.HandlerFunc {
@@ -36,17 +39,6 @@ func (s *Server) CreatePostHandler() http.HandlerFunc {
 		uploadedCloudFiles := make([]uuid.UUID, 0, len(files))
 
 		g, ctx := errgroup.WithContext(r.Context())
-
-		params := db.CreatePostParams{
-			Content: &content,
-			UserID:  myUserID,
-		}
-		post, err := s.CreatePost(r.Context(), params)
-		if err != nil {
-			log.Printf("failed to create post: %v", err.Error())
-			api.JSONResponse(w, api.GenericErrorResp)
-			return
-		}
 
 		for _, file := range files {
 			g.Go(func() error {
@@ -89,10 +81,21 @@ func (s *Server) CreatePostHandler() http.HandlerFunc {
 			return
 		}
 
-		imageParams := make([]db.CreateImagesParams, len(uploadedCloudFiles))
+		// create post
+		params := db.CreatePostParams{
+			Content: &content,
+			UserID:  myUserID,
+		}
+		post, err := s.CreatePost(r.Context(), params)
+		if err != nil {
+			log.Printf("failed to create post: %v", err.Error())
+			api.JSONResponse(w, api.GenericErrorResp)
+			return
+		}
 
+		// create image
+		imageParams := make([]db.CreateImagesParams, len(uploadedCloudFiles))
 		for i, filename := range uploadedCloudFiles {
-			fmt.Println("image param post id:", post.ID)
 			imageParams[i] = db.CreateImagesParams{
 				Uid:    filename,
 				PostID: post.ID,
@@ -112,6 +115,12 @@ func (s *Server) CreatePostHandler() http.HandlerFunc {
 
 func (s *Server) GetPaginatedPostsHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		cursor, err := GetCursorParam(r)
+		if err != nil {
+			log.Printf("failed to parse curosr value: %v", err.Error())
+			api.JSONResponse(w, api.InvalidQueryParamsResp)
+			return
+		}
 		myUserID, err := auth.GetSessionUserId(r)
 		if err != nil {
 			api.JSONResponse(w, api.AuthErrorResp)
@@ -120,36 +129,30 @@ func (s *Server) GetPaginatedPostsHandler() http.HandlerFunc {
 		username, err := GetRouteSegment(r, "username")
 		if err != nil {
 			log.Printf("failed to parse username: %v", err.Error())
-			api.JSONResponse(w, api.InvalidUrlResp)
+			api.JSONResponse(w, api.InvalidRouteResp)
 			return
 		}
-		pageNum, err := strconv.Atoi(GetQueryParam(r, "page"))
-		if err != nil {
-			log.Printf("failed to parse query param page: %v", err.Error())
-			api.JSONResponse(w, api.InvalidQueryParamsResp)
-			return
-		}
-
-		offset := int32(pageNum * PostPageLimit)
 		getPostsParams := db.GetPaginatedPostsByUsernameParams{
 			MyUserID:   myUserID,
-			MyUsername: username,
-			Offset:     offset,
-			Limit:      PostPageLimit,
+			Username:   username,
+			LastPostID: cursor,
+			Limit:      PostPageLimit + 1,
 		}
 
 		postRows, err := s.GetPaginatedPostsByUsername(r.Context(), getPostsParams)
 		if err != nil {
 			log.Printf("failed to get posts:%v", err.Error())
-			api.JSONResponse(w, handleDBError(err))
+			api.JSONResponse(w, GenDBResponse(err))
 			return
 		}
 
-		posts := make([]PostDTO, len(postRows))
-
 		var imageUids []uuid.UUID
 
-		for i, row := range postRows {
+		listLength := min(PostPageLimit, len(postRows))
+		posts := make([]PostDTO, listLength)
+
+		for i := range listLength {
+			row := postRows[i]
 			err := json.Unmarshal(row.ImageUids, &imageUids)
 			if err != nil {
 				log.Printf("failed to unmarshal images: %v", err.Error())
@@ -157,15 +160,15 @@ func (s *Server) GetPaginatedPostsHandler() http.HandlerFunc {
 				return
 			}
 			owner := OwnerProfileDTO{
-				UserUid:         row.OwnerUid.String(),
-				Username:        *row.OwnerUsername,
-				Name:            *row.OwnerName,
+				UserId:          strconv.FormatInt(row.OwnerID, 10),
+				Username:        row.OwnerUsername,
+				Name:            row.OwnerName,
 				ProfileImageUrl: s.GetImageUrl(row.OwnerProfileImage.String()),
 				IsFollowing:     row.OwnerIsFollowing,
 			}
 			posts[i] = PostDTO{
 				CreatedAt:    ConvertTime(row.CreatedAt),
-				PostUid:      row.PostUid.String(),
+				PostId:       strconv.FormatInt(row.PostID, 10),
 				Content:      *row.Content,
 				ImageUrls:    s.GetPostImageUrls(imageUids),
 				LikeCount:    row.LikeCount,
@@ -175,21 +178,18 @@ func (s *Server) GetPaginatedPostsHandler() http.HandlerFunc {
 				IsOwner:      row.OwnerID == myUserID,
 			}
 		}
-		var nextCursor *int
 
-		if len(posts) == PostPageLimit {
-			nextPage := pageNum + 1
-			nextCursor = &nextPage
+		var nextCursor *string
+		if len(postRows) == PostPageLimit+1 {
+			nextCursor = &posts[len(posts)-1].PostId
 		}
-
-		data := PageDTO[PostDTO]{
+		data := NewPageDTO[PostDTO]{
 			Data:       posts,
 			NextCursor: nextCursor,
 		}
-
 		resp := api.ApiResponse{
-			Payload: data,
-			Code:    http.StatusOK,
+			Data: data,
+			Code: http.StatusOK,
 		}
 		api.JSONResponse(w, resp)
 	}
@@ -203,27 +203,22 @@ func (s *Server) GetPostHandler() http.HandlerFunc {
 			return
 		}
 
-		vars := mux.Vars(r)
-		val := vars["postUid"]
-
-		var postUid uuid.UUID
-
-		err = postUid.Scan(val)
+		postId, err := GetIdFromRoute(r, "postId")
 		if err != nil {
-			log.Printf("failed to scan post uid from route:%v", err.Error())
+			log.Printf("failed to scan post id from route:%v", err.Error())
 			api.JSONResponse(w, api.GenericErrorResp)
 			return
 		}
 
-		postParams := db.GetPostByPostUIDParams{
+		postParams := db.GetPostByPostIDParams{
 			MyUserID: myUserId,
-			PostUid:  postUid,
+			PostID:   postId,
 		}
 
-		postRow, err := s.GetPostByPostUID(r.Context(), postParams)
+		postRow, err := s.GetPostByPostID(r.Context(), postParams)
 		if err != nil {
 			log.Printf("failed to get posts:%v", err.Error())
-			api.JSONResponse(w, handleDBError(err))
+			api.JSONResponse(w, GenDBResponse(err))
 			return
 		}
 
@@ -235,6 +230,7 @@ func (s *Server) GetPostHandler() http.HandlerFunc {
 			return
 		}
 		post := PostDTO{
+			PostId:       strconv.FormatInt(postRow.PostID, 10),
 			CreatedAt:    ConvertTime(postRow.CreatedAt),
 			Content:      *postRow.Content,
 			ImageUrls:    s.GetPostImageUrls(imageUids),
@@ -245,15 +241,15 @@ func (s *Server) GetPostHandler() http.HandlerFunc {
 		}
 
 		post.Owner = OwnerProfileDTO{
-			UserUid:         postRow.OwnerUid.String(),
-			Username:        *postRow.OwnerUsername,
-			Name:            *postRow.OwnerName,
+			UserId:          strconv.FormatInt(postRow.PostID, 10),
+			Username:        postRow.OwnerUsername,
+			Name:            postRow.OwnerName,
 			ProfileImageUrl: s.GetImageUrl(postRow.OwnerProfileImage.String()),
 			IsFollowing:     postRow.OwnerIsFollowing,
 		}
 		resp := api.ApiResponse{
-			Payload: post,
-			Code:    http.StatusOK,
+			Data: post,
+			Code: http.StatusOK,
 		}
 		api.JSONResponse(w, resp)
 	}
@@ -261,14 +257,14 @@ func (s *Server) GetPostHandler() http.HandlerFunc {
 
 func (s *Server) DeletePostHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		postUid, err := GetUidFromRoute(r, "postUid")
+		postId, err := GetIdFromRoute(r, "postId")
 		if err != nil {
 			log.Printf("failed to scan postUid from route: %v", err.Error())
 			api.JSONResponse(w, api.GenericErrorResp)
 			return
 		}
 
-		err = s.DeletePostByPostUid(r.Context(), postUid)
+		err = s.DeletePostByPostID(r.Context(), postId)
 		if err != nil {
 			log.Printf("failed to delete post from db: %v", err.Error())
 			api.JSONResponse(w, api.GenericErrorResp)
@@ -276,5 +272,83 @@ func (s *Server) DeletePostHandler() http.HandlerFunc {
 		}
 
 		api.OKResponse(w)
+	}
+}
+
+func (s *Server) FeedHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cursor, err := GetCursorParam(r)
+		if err != nil {
+			log.Printf("failed to parse curosr value: %v", err.Error())
+			api.JSONResponse(w, api.InvalidQueryParamsResp)
+			return
+		}
+
+		myUserID, err := auth.GetSessionUserId(r)
+		if err != nil {
+			api.JSONResponse(w, api.AuthErrorResp)
+			return
+		}
+
+		params := db.GetFeedPostsParams{
+			MyUserID:   myUserID,
+			LastPostID: cursor,
+			Limit:      FeedPageLimit + 1,
+		}
+		postRows, err := s.GetFeedPosts(r.Context(), params)
+		if err != nil {
+			log.Printf("failed to get feed posts from db: %v", err.Error())
+			api.JSONResponse(w, GenDBResponse(err))
+			return
+		}
+
+		var imageUids []uuid.UUID
+
+		listLength := min(PostPageLimit, len(postRows))
+		posts := make([]PostDTO, listLength)
+
+		for i := range listLength {
+			row := postRows[i]
+			err := json.Unmarshal(row.ImageUids, &imageUids)
+			if err != nil {
+				log.Printf("failed to unmarshal images: %v", err.Error())
+				api.JSONResponse(w, api.GenericErrorResp)
+				return
+			}
+			owner := OwnerProfileDTO{
+				UserId:          strconv.FormatInt(row.OwnerID, 10),
+				Username:        row.OwnerUsername,
+				Name:            row.OwnerName,
+				ProfileImageUrl: s.GetImageUrl(row.OwnerProfileImage.String()),
+				IsFollowing:     true,
+			}
+			posts[i] = PostDTO{
+				CreatedAt:    ConvertTime(row.CreatedAt),
+				PostId:       strconv.FormatInt(row.PostID, 10),
+				Content:      *row.Content,
+				ImageUrls:    s.GetPostImageUrls(imageUids),
+				LikeCount:    row.LikeCount,
+				CommentCount: row.CommentCount,
+				HasLiked:     row.HasLiked,
+				Owner:        owner,
+				IsOwner:      row.OwnerID == myUserID,
+			}
+		}
+
+		var nextCursor *string
+
+		if len(postRows) == FeedPageLimit+1 {
+			nextCursor = &posts[len(posts)-1].PostId
+		}
+		data := NewPageDTO[PostDTO]{
+			Data:       posts,
+			NextCursor: nextCursor,
+		}
+
+		resp := api.ApiResponse{
+			Data: data,
+			Code: http.StatusOK,
+		}
+		api.JSONResponse(w, resp)
 	}
 }

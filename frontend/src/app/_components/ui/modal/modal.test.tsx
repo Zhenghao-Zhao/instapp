@@ -2,7 +2,7 @@ import { DiscardAlert } from "@/app/_components/ui/alert/templates";
 import Providers from "@/app/_libs/contexts";
 import Modal from "@/app/_libs/contexts/providers/ModalContextProivder";
 import { RenderResult, fireEvent, render } from "@testing-library/react";
-import { ModalContent, ModalTrigger } from ".";
+import { ModalWrapper, ModalTrigger } from ".";
 
 const OPEN_TEXT = "Open";
 const CONTENT_TEXT = "Content";
@@ -10,9 +10,9 @@ const CONTENT_TEXT = "Content";
 const BasicModal = () => (
   <Providers>
     <Modal>
-      <ModalContent>
+      <ModalWrapper>
         <div>{CONTENT_TEXT}</div>
-      </ModalContent>
+      </ModalWrapper>
       <ModalTrigger>
         <button>{OPEN_TEXT}</button>
       </ModalTrigger>
@@ -55,9 +55,9 @@ describe("Given basic modal", () => {
 const ModalWithAlert = () => (
   <Providers>
     <Modal alert={<DiscardAlert />} alertOnCloseInit>
-      <ModalContent>
+      <ModalWrapper>
         <div>Content</div>
-      </ModalContent>
+      </ModalWrapper>
       <ModalTrigger>
         <button>Open</button>
       </ModalTrigger>

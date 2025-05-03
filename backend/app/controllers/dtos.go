@@ -5,9 +5,14 @@ type PageDTO[T any] struct {
 	NextCursor *int `json:"nextCursor"`
 }
 
+type NewPageDTO[T any] struct {
+	Data       []T     `json:"data"`
+	NextCursor *string `json:"nextCursor"`
+}
+
 type PostDTO struct {
 	CreatedAt    string          `json:"createdAt"`
-	PostUid      string          `json:"postUid"`
+	PostId       string          `json:"postId"`
 	Content      string          `json:"content"`
 	ImageUrls    []string        `json:"imageUrls"`
 	LikeCount    int64           `json:"likeCount"`
@@ -18,7 +23,7 @@ type PostDTO struct {
 }
 
 type OwnerProfileDTO struct {
-	UserUid         string  `json:"userUid"`
+	UserId          string  `json:"userId"`
 	Username        string  `json:"username"`
 	Name            string  `json:"name"`
 	ProfileImageUrl *string `json:"profileImageUrl"`
@@ -30,7 +35,7 @@ type ProfileImageDTO struct {
 }
 
 type ProfileDTO struct {
-	UserUid         string  `json:"userUid"`
+	UserId          string  `json:"userId"`
 	Username        string  `json:"username"`
 	Name            string  `json:"name"`
 	ProfileImageUrl *string `json:"profileImageUrl"`
@@ -41,18 +46,22 @@ type ProfileDTO struct {
 }
 
 type CommentDTO struct {
-	CreatedAt  string         `json:"createdAt"`
-	CommentUid string         `json:"commentUid"`
-	Content    string         `json:"content"`
-	LikeCount  int64          `json:"likeCount"`
-	HasLiked   bool           `json:"hasLiked"`
-	Owner      AuthProfileDTO `json:"owner"`
-	IsOwner    bool           `json:"isOwner"`
+	CreatedAt string         `json:"createdAt"`
+	CommentId string         `json:"commentId"`
+	Content   string         `json:"content"`
+	LikeCount int64          `json:"likeCount"`
+	HasLiked  bool           `json:"hasLiked"`
+	Owner     UserProfileDTO `json:"owner"`
+	IsOwner   bool           `json:"isOwner"`
 }
 
-type AuthProfileDTO struct {
+type UserProfileDTO struct {
 	Username        string  `json:"username"`
-	UserUid         string  `json:"userUid"`
+	UserId          string  `json:"userId"`
 	Name            string  `json:"name"`
 	ProfileImageUrl *string `json:"profileImageUrl"`
+}
+
+type RelationDTO struct {
+	IsFollowing bool `json:"isFollowing"`
 }

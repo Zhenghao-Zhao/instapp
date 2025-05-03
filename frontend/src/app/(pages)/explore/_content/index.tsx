@@ -1,8 +1,8 @@
 "use client";
 import { InfiniteScrollLoader } from "@/app/_components/common";
-import PostEntry from "@/app/_components/posts/PostEntry";
+import PostEntry from "@/app/_components/post/PostEntry";
 import useFetchExplorePosts from "@/app/_libs/hooks/infiniteQueries/useFetchExplorePosts";
-import { Post } from "@/app/_libs/types";
+import { Post } from "@/app/_libs/types/zod";
 import { getAbsoluteURL } from "@/app/_libs/utils";
 import Link from "next/link";
 import React from "react";

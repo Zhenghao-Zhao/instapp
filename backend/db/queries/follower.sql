@@ -1,94 +1,64 @@
--- name: CreateFollower :one
+-- name: CreateFollower :exec
 INSERT INTO followers (follower_id, followee_id)
-    VALUES ((
-            SELECT
-                id
-            FROM
-                users u
-            WHERE
-                u.uid = @follower_uid), (
-                SELECT
-                    id
-                FROM
-                    users u
-                WHERE
-                    u.uid = @followee_uid))
-    RETURNING
-        *;
+    VALUES (@follower_id, @followee_id);
 
 -- name: DropFollow :exec
 DELETE FROM followers
-WHERE follower_id = (
-        SELECT
-            id
-        FROM
-            users u
-        WHERE
-            u.uid = @follower_uid)
-    AND followee_id = (
-        SELECT
-            id
-        FROM
-            users u
-        WHERE
-            u.uid = @followee_uid);
+WHERE follower_id = @follower_id
+    AND followee_id = @followee_id;
 
--- name: GetPaginatedFollowersByUserUID :many
+-- name: SearchPaginatedFollowers :many
 SELECT
-    follower_id
+    u.user_id,
+    u.username,
+    u.name,
+    u.profile_image,
+    f.id AS follow_id
 FROM
-    followers
+    user_profile_search u
+    INNER JOIN followers f ON u.user_id = f.follower_id
+        AND f.followee_id = @followee_id
 WHERE
-    followee_id IN (
-        SELECT
-            id
-        FROM
-            users u
-        WHERE
-            u.uid = @user_uid) OFFSET sqlc.arg ('offset')
+    CASE WHEN @search_query = '' THEN
+        TRUE
+    ELSE
+        search_param @@ to_tsquery(@search_query || ':*')
+    END
+    AND (@last_follow_id::bigint = 0
+        OR f.id < @last_follow_id::bigint)
+ORDER BY
+    f.id DESC
 LIMIT sqlc.arg ('limit');
 
--- name: GetPaginatedFolloweesByUserUID :many
+-- name: SearchPaginatedFollowees :many
+SELECT
+    u.user_id,
+    u.username,
+    u.name,
+    u.profile_image,
+    f.id AS follow_id
+FROM
+    user_profile_search u
+    INNER JOIN followers f ON u.user_id = f.followee_id
+        AND f.follower_id = @follower_id
+WHERE
+    CASE WHEN @search_query = '' THEN
+        TRUE
+    ELSE
+        search_param @@ to_tsquery(@search_query || ':*')
+    END
+    AND (@last_follow_id::bigint = 0
+        OR f.id < @last_follow_id::bigint)
+ORDER BY
+    f.id DESC
+LIMIT sqlc.arg ('limit');
+
+-- name: GetFolloweeIds :many
 SELECT
     followee_id
 FROM
     followers
 WHERE
-    follower_id IN (
-        SELECT
-            id
-        FROM
-            users u
-        WHERE
-            u.uid = @user_uid) OFFSET sqlc.arg ('offset')
-LIMIT sqlc.arg ('limit');
-
--- name: SearchPaginatedFollowers :many
-SELECT
-    u.user_uid,
-    u.username,
-    u.name,
-    u.profile_image
-FROM
-    user_profile_search u
-    RIGHT JOIN followers f ON u.user_id = f.follower_id
-        AND f.followee_id = @followee_id
-WHERE
-    search_param @@ to_tsquery(@search_query || ':*') OFFSET sqlc.arg ('offset')
-LIMIT sqlc.arg ('limit');
-
--- name: SearchPaginatedFollowees :many
-SELECT
-    u.user_uid,
-    u.username,
-    u.name,
-    u.profile_image
-FROM
-    user_profile_search u
-    RIGHT JOIN followers f ON u.user_id = f.followee_id
-        AND f.follower_id = @follower_id
-WHERE
-    search_param @@ to_tsquery(@search_query || ':*') OFFSET sqlc.arg ('offset')
-LIMIT sqlc.arg ('limit');
-
+    followee_id = ANY (@followee_ids::bigint[])
+    AND follower_id = @my_user_id;
 

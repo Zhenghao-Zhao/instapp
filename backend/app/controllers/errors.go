@@ -8,10 +8,10 @@ import (
 
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/zhenghao-zhao/instapp/app/utils/api"
+	"github.com/zhenghao-zhao/instapp/app/api"
 )
 
-func handleDBError(err error) api.ApiResponse {
+func GenDBResponse(err error) api.ApiResponse {
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) {
 		switch pgErr.Code {

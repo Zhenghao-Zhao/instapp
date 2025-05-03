@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-	"github.com/zhenghao-zhao/instapp/app/utils/api"
-	"github.com/zhenghao-zhao/instapp/app/utils/auth"
+	"github.com/zhenghao-zhao/instapp/app/api"
+	"github.com/zhenghao-zhao/instapp/app/auth"
 	db "github.com/zhenghao-zhao/instapp/db/sqlc"
 )
 
@@ -34,9 +35,9 @@ func (s *Server) DoLogin() http.HandlerFunc {
 		}
 
 		info := auth.UserSessionInfo{
-			UserUid:         user.Uid,
 			UserId:          user.ID,
 			Username:        user.Username,
+			Name:            *user.Name,
 			ProfileImageUrl: s.GetImageUrl(user.ProfileImage.String()),
 		}
 
@@ -88,12 +89,11 @@ func (s *Server) DoRegister() http.HandlerFunc {
 		userInfo, err := s.CreateAccountTx(r.Context(), accountParams)
 		if err != nil {
 			log.Printf("failed to create account in db: %v", err.Error())
-			api.JSONResponse(w, handleDBError(err))
+			api.JSONResponse(w, GenDBResponse(err))
 			return
 		}
 
 		sessionInfo := auth.UserSessionInfo{
-			UserUid:         userInfo.UserUid,
 			UserId:          userInfo.UserId,
 			Username:        userInfo.Username,
 			Name:            userInfo.Name,
@@ -133,16 +133,16 @@ func (s *Server) GetAuthProfileHandler() http.HandlerFunc {
 			return
 		}
 
-		authProfile := AuthProfileDTO{
+		authProfile := UserProfileDTO{
 			Username:        sessionInfo.Username,
-			UserUid:         sessionInfo.UserUid.String(),
+			UserId:          strconv.FormatInt(sessionInfo.UserId, 10),
 			Name:            sessionInfo.Name,
 			ProfileImageUrl: sessionInfo.ProfileImageUrl,
 		}
 
 		resp := api.ApiResponse{
-			Payload: authProfile,
-			Code:    http.StatusOK,
+			Data: authProfile,
+			Code: http.StatusOK,
 		}
 
 		api.JSONResponse(w, resp)
@@ -151,7 +151,6 @@ func (s *Server) GetAuthProfileHandler() http.HandlerFunc {
 
 func (s *Server) GetUserProfileHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Println("user profile request received")
 		vars := mux.Vars(r)
 		username := vars["username"]
 
@@ -169,12 +168,12 @@ func (s *Server) GetUserProfileHandler() http.HandlerFunc {
 		data, err := s.GetProfileByUsernameOrID(r.Context(), params)
 		if err != nil {
 			log.Printf("Error retrieving user profile:%v", err.Error())
-			api.JSONResponse(w, api.GenericErrorResp)
+			api.JSONResponse(w, api.NotFoundErrorResp)
 			return
 		}
 
 		profile := ProfileDTO{
-			UserUid:         data.UserUid.String(),
+			UserId:          strconv.FormatInt(*data.UserID, 10),
 			Username:        *data.Username,
 			Name:            data.Name,
 			ProfileImageUrl: s.GetImageUrl(data.ProfileImage.String()),
@@ -185,8 +184,8 @@ func (s *Server) GetUserProfileHandler() http.HandlerFunc {
 		}
 
 		resp := api.ApiResponse{
-			Payload: profile,
-			Code:    http.StatusOK,
+			Data: profile,
+			Code: http.StatusOK,
 		}
 
 		api.JSONResponse(w, resp)
@@ -214,8 +213,8 @@ func (s *Server) ChangeProfileImageHandler() http.HandlerFunc {
 			return
 		}
 
-		myUserId, ok := session.Values["userId"].(int32)
-		if !ok {
+		myUserId, err := auth.GetSessionUserId(r)
+		if err != nil {
 			api.JSONResponse(w, api.AuthErrorResp)
 			return
 		}
@@ -275,7 +274,7 @@ func (s *Server) ChangeProfileImageHandler() http.HandlerFunc {
 		}
 
 		apiResp := api.ApiResponse{
-			Payload: ProfileImageDTO{
+			Data: ProfileImageDTO{
 				ProfileImageUrl: profileImageUrl,
 			},
 			Code: http.StatusOK,

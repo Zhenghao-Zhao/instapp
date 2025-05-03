@@ -1,4 +1,4 @@
-import { ClickDetector } from "@/app/_components/common";
+import ClickDetector from "@/app/_components/common/ClickDetector";
 import {
   PropsWithChildren,
   RefObject,
@@ -37,7 +37,9 @@ export default function Dropdown({ children }: PropsWithChildren) {
         contentRef,
       }}
     >
-      <ClickDetector onClickOutside={() => setShow(false)}>{children}</ClickDetector>
+      <ClickDetector onClickOutside={() => setShow(false)}>
+        {children}
+      </ClickDetector>
     </DropdownContext.Provider>
   );
 }

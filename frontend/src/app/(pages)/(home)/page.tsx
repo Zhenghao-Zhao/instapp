@@ -1,21 +1,33 @@
-import { notFound } from "next/navigation";
-import { getFolloweePosts } from "../../(server)/_server/utils/queries";
-import { createClient } from "../../_libs/utils/supabase/server";
-import Content from "./_content";
+import { serverApi } from "@/app/_libs/hooks/api/axios";
+import { FeedPageSchema } from "@/app/_libs/vars/schemas";
+import {
+  dehydrate,
+  HydrationBoundary,
+  QueryClient,
+} from "@tanstack/react-query";
+import { cookies } from "next/headers";
+import Feed from "./_content/Feed";
 
 export default async function Home() {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
-
-  const { data: postData, error } = await getFolloweePosts(supabase, user.id);
-  if (error) return notFound();
-
-  const postInitData = {
-    pageParams: [0],
-    pages: [postData],
-  };
-  return <Content initData={postInitData} />;
+  const queryClient = new QueryClient();
+  await queryClient.prefetchInfiniteQuery({
+    queryKey: ["posts", "infinite", "feed"],
+    queryFn: ({ pageParam }) => getFeedPosts(pageParam),
+    staleTime: 60 * 1000,
+    initialPageParam: "0",
+  });
+  return (
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <Feed />
+    </HydrationBoundary>
+  );
 }
+
+const getFeedPosts = async (pageParam: string) => {
+  const result = await serverApi.get(`feed?cursor=${pageParam}`, {
+    headers: {
+      Cookie: cookies().toString(),
+    },
+  });
+  return FeedPageSchema.parse(result.data.data);
+};

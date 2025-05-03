@@ -4,8 +4,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/zhenghao-zhao/instapp/app/utils/api"
-	"github.com/zhenghao-zhao/instapp/app/utils/auth"
+	"github.com/zhenghao-zhao/instapp/app/api"
+	"github.com/zhenghao-zhao/instapp/app/auth"
 	db "github.com/zhenghao-zhao/instapp/db/sqlc"
 )
 
@@ -17,15 +17,15 @@ func (s *Server) LikePostHandler() http.HandlerFunc {
 			return
 		}
 
-		postUid, err := GetUidFromRoute(r, "postUid")
+		postId, err := GetIdFromRoute(r, "postId")
 		if err != nil {
 			log.Printf("failed to scan postUid from route: %v", err.Error())
 			api.JSONResponse(w, api.GenericErrorResp)
 			return
 		}
 		params := db.CreatePostLikeParams{
-			UserID:  myUserID,
-			PostUid: postUid,
+			UserID: myUserID,
+			PostID: postId,
 		}
 		data, err := s.CreatePostLike(r.Context(), params)
 		if err != nil {
@@ -34,8 +34,8 @@ func (s *Server) LikePostHandler() http.HandlerFunc {
 			return
 		}
 		resp := api.ApiResponse{
-			Payload: data,
-			Code:    http.StatusOK,
+			Data: data,
+			Code: http.StatusOK,
 		}
 		api.JSONResponse(w, resp)
 	}
@@ -49,15 +49,15 @@ func (s *Server) UnlikePostHandler() http.HandlerFunc {
 			return
 		}
 
-		postUid, err := GetUidFromRoute(r, "postUid")
+		postId, err := GetIdFromRoute(r, "postId")
 		if err != nil {
 			log.Printf("failed to scan postUid from route: %v", err.Error())
 			api.JSONResponse(w, api.GenericErrorResp)
 			return
 		}
 		params := db.DropPostLikeParams{
-			UserID:  myUserID,
-			PostUid: postUid,
+			UserID: myUserID,
+			PostID: postId,
 		}
 		err = s.DropPostLike(r.Context(), params)
 		if err != nil {

@@ -11,101 +11,61 @@ import (
 	"github.com/google/uuid"
 )
 
-const createFollower = `-- name: CreateFollower :one
+const createFollower = `-- name: CreateFollower :exec
 INSERT INTO followers (follower_id, followee_id)
-    VALUES ((
-            SELECT
-                id
-            FROM
-                users u
-            WHERE
-                u.uid = $1), (
-                SELECT
-                    id
-                FROM
-                    users u
-                WHERE
-                    u.uid = $2))
-    RETURNING
-        id, created_at, follower_id, followee_id
+    VALUES ($1, $2)
 `
 
 type CreateFollowerParams struct {
-	FollowerUid uuid.UUID `json:"follower_uid"`
-	FolloweeUid uuid.UUID `json:"followee_uid"`
+	FollowerID int64 `json:"follower_id"`
+	FolloweeID int64 `json:"followee_id"`
 }
 
-func (q *Queries) CreateFollower(ctx context.Context, arg CreateFollowerParams) (*Follower, error) {
-	row := q.db.QueryRow(ctx, createFollower, arg.FollowerUid, arg.FolloweeUid)
-	var i Follower
-	err := row.Scan(
-		&i.ID,
-		&i.CreatedAt,
-		&i.FollowerID,
-		&i.FolloweeID,
-	)
-	return &i, err
+func (q *Queries) CreateFollower(ctx context.Context, arg CreateFollowerParams) error {
+	_, err := q.db.Exec(ctx, createFollower, arg.FollowerID, arg.FolloweeID)
+	return err
 }
 
 const dropFollow = `-- name: DropFollow :exec
 DELETE FROM followers
-WHERE follower_id = (
-        SELECT
-            id
-        FROM
-            users u
-        WHERE
-            u.uid = $1)
-    AND followee_id = (
-        SELECT
-            id
-        FROM
-            users u
-        WHERE
-            u.uid = $2)
+WHERE follower_id = $1
+    AND followee_id = $2
 `
 
 type DropFollowParams struct {
-	FollowerUid uuid.UUID `json:"follower_uid"`
-	FolloweeUid uuid.UUID `json:"followee_uid"`
+	FollowerID int64 `json:"follower_id"`
+	FolloweeID int64 `json:"followee_id"`
 }
 
 func (q *Queries) DropFollow(ctx context.Context, arg DropFollowParams) error {
-	_, err := q.db.Exec(ctx, dropFollow, arg.FollowerUid, arg.FolloweeUid)
+	_, err := q.db.Exec(ctx, dropFollow, arg.FollowerID, arg.FolloweeID)
 	return err
 }
 
-const getPaginatedFolloweesByUserUID = `-- name: GetPaginatedFolloweesByUserUID :many
+const getFolloweeIds = `-- name: GetFolloweeIds :many
 SELECT
     followee_id
 FROM
     followers
 WHERE
-    follower_id IN (
-        SELECT
-            id
-        FROM
-            users u
-        WHERE
-            u.uid = $1) OFFSET $2
-LIMIT $3
+    followee_id = ANY ($1::bigint[])
+    AND follower_id = $2
 `
 
-type GetPaginatedFolloweesByUserUIDParams struct {
-	UserUid uuid.UUID `json:"user_uid"`
-	Offset  int32     `json:"offset"`
-	Limit   int32     `json:"limit"`
+type GetFolloweeIdsParams struct {
+	FolloweeIds []int64 `json:"followee_ids"`
+	MyUserID    int64   `json:"my_user_id"`
 }
 
-func (q *Queries) GetPaginatedFolloweesByUserUID(ctx context.Context, arg GetPaginatedFolloweesByUserUIDParams) ([]int32, error) {
-	rows, err := q.db.Query(ctx, getPaginatedFolloweesByUserUID, arg.UserUid, arg.Offset, arg.Limit)
+func (q *Queries) GetFolloweeIds(ctx context.Context, arg GetFolloweeIdsParams) ([]int64, error) {
+	rows, err := q.db.Query(ctx, getFolloweeIds, arg.FolloweeIds, arg.MyUserID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []int32
+	var items []int64
 	for rows.Next() {
-		var followee_id int32
+		var followee_id int64
 		if err := rows.Scan(&followee_id); err != nil {
 			return nil, err
 		}
@@ -117,82 +77,50 @@ func (q *Queries) GetPaginatedFolloweesByUserUID(ctx context.Context, arg GetPag
 	return items, nil
 }
 
-const getPaginatedFollowersByUserUID = `-- name: GetPaginatedFollowersByUserUID :many
-SELECT
-    follower_id
-FROM
-    followers
-WHERE
-    followee_id IN (
-        SELECT
-            id
-        FROM
-            users u
-        WHERE
-            u.uid = $1) OFFSET $2
-LIMIT $3
-`
-
-type GetPaginatedFollowersByUserUIDParams struct {
-	UserUid uuid.UUID `json:"user_uid"`
-	Offset  int32     `json:"offset"`
-	Limit   int32     `json:"limit"`
-}
-
-func (q *Queries) GetPaginatedFollowersByUserUID(ctx context.Context, arg GetPaginatedFollowersByUserUIDParams) ([]int32, error) {
-	rows, err := q.db.Query(ctx, getPaginatedFollowersByUserUID, arg.UserUid, arg.Offset, arg.Limit)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []int32
-	for rows.Next() {
-		var follower_id int32
-		if err := rows.Scan(&follower_id); err != nil {
-			return nil, err
-		}
-		items = append(items, follower_id)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const searchPaginatedFollowees = `-- name: SearchPaginatedFollowees :many
 SELECT
-    u.user_uid,
+    u.user_id,
     u.username,
     u.name,
-    u.profile_image
+    u.profile_image,
+    f.id AS follow_id
 FROM
     user_profile_search u
-    RIGHT JOIN followers f ON u.user_id = f.followee_id
+    INNER JOIN followers f ON u.user_id = f.followee_id
         AND f.follower_id = $1
 WHERE
-    search_param @@ to_tsquery($2 || ':*') OFFSET $3
+    CASE WHEN $2 = '' THEN
+        TRUE
+    ELSE
+        search_param @@ to_tsquery($2 || ':*')
+    END
+    AND ($3::bigint = 0
+        OR f.id < $3::bigint)
+ORDER BY
+    f.id DESC
 LIMIT $4
 `
 
 type SearchPaginatedFolloweesParams struct {
-	FollowerID  int32   `json:"follower_id"`
-	SearchQuery *string `json:"search_query"`
-	Offset      int32   `json:"offset"`
-	Limit       int32   `json:"limit"`
+	FollowerID   int64       `json:"follower_id"`
+	SearchQuery  interface{} `json:"search_query"`
+	LastFollowID int64       `json:"last_follow_id"`
+	Limit        int32       `json:"limit"`
 }
 
 type SearchPaginatedFolloweesRow struct {
-	UserUid      uuid.UUID `json:"user_uid"`
-	Username     *string   `json:"username"`
+	UserID       int64     `json:"user_id"`
+	Username     string    `json:"username"`
 	Name         *string   `json:"name"`
 	ProfileImage uuid.UUID `json:"profile_image"`
+	FollowID     int64     `json:"follow_id"`
 }
 
 func (q *Queries) SearchPaginatedFollowees(ctx context.Context, arg SearchPaginatedFolloweesParams) ([]*SearchPaginatedFolloweesRow, error) {
 	rows, err := q.db.Query(ctx, searchPaginatedFollowees,
 		arg.FollowerID,
 		arg.SearchQuery,
-		arg.Offset,
+		arg.LastFollowID,
 		arg.Limit,
 	)
 	if err != nil {
@@ -203,10 +131,11 @@ func (q *Queries) SearchPaginatedFollowees(ctx context.Context, arg SearchPagina
 	for rows.Next() {
 		var i SearchPaginatedFolloweesRow
 		if err := rows.Scan(
-			&i.UserUid,
+			&i.UserID,
 			&i.Username,
 			&i.Name,
 			&i.ProfileImage,
+			&i.FollowID,
 		); err != nil {
 			return nil, err
 		}
@@ -220,38 +149,48 @@ func (q *Queries) SearchPaginatedFollowees(ctx context.Context, arg SearchPagina
 
 const searchPaginatedFollowers = `-- name: SearchPaginatedFollowers :many
 SELECT
-    u.user_uid,
+    u.user_id,
     u.username,
     u.name,
-    u.profile_image
+    u.profile_image,
+    f.id AS follow_id
 FROM
     user_profile_search u
-    RIGHT JOIN followers f ON u.user_id = f.follower_id
+    INNER JOIN followers f ON u.user_id = f.follower_id
         AND f.followee_id = $1
 WHERE
-    search_param @@ to_tsquery($2 || ':*') OFFSET $3
+    CASE WHEN $2 = '' THEN
+        TRUE
+    ELSE
+        search_param @@ to_tsquery($2 || ':*')
+    END
+    AND ($3::bigint = 0
+        OR f.id < $3::bigint)
+ORDER BY
+    f.id DESC
 LIMIT $4
 `
 
 type SearchPaginatedFollowersParams struct {
-	FolloweeID  int32   `json:"followee_id"`
-	SearchQuery *string `json:"search_query"`
-	Offset      int32   `json:"offset"`
-	Limit       int32   `json:"limit"`
+	FolloweeID   int64       `json:"followee_id"`
+	SearchQuery  interface{} `json:"search_query"`
+	LastFollowID int64       `json:"last_follow_id"`
+	Limit        int32       `json:"limit"`
 }
 
 type SearchPaginatedFollowersRow struct {
-	UserUid      uuid.UUID `json:"user_uid"`
-	Username     *string   `json:"username"`
+	UserID       int64     `json:"user_id"`
+	Username     string    `json:"username"`
 	Name         *string   `json:"name"`
 	ProfileImage uuid.UUID `json:"profile_image"`
+	FollowID     int64     `json:"follow_id"`
 }
 
 func (q *Queries) SearchPaginatedFollowers(ctx context.Context, arg SearchPaginatedFollowersParams) ([]*SearchPaginatedFollowersRow, error) {
 	rows, err := q.db.Query(ctx, searchPaginatedFollowers,
 		arg.FolloweeID,
 		arg.SearchQuery,
-		arg.Offset,
+		arg.LastFollowID,
 		arg.Limit,
 	)
 	if err != nil {
@@ -262,10 +201,11 @@ func (q *Queries) SearchPaginatedFollowers(ctx context.Context, arg SearchPagina
 	for rows.Next() {
 		var i SearchPaginatedFollowersRow
 		if err := rows.Scan(
-			&i.UserUid,
+			&i.UserID,
 			&i.Username,
 			&i.Name,
 			&i.ProfileImage,
+			&i.FollowID,
 		); err != nil {
 			return nil, err
 		}

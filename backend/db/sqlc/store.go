@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -30,14 +29,14 @@ type CreateAccountTxParams struct {
 
 type UserInfo struct {
 	Username        string
-	UserUid         uuid.UUID
-	UserId          int32
+	UserId          int64
 	Name            string
 	ProfileImageUrl *string
 }
 
+// Creating user and profile in a single transaction
 func (store *StoreImp) CreateAccountTx(ctx context.Context, arg CreateAccountTxParams) (*UserInfo, error) {
-	fmt.Println("--creating account...--")
+	fmt.Println("--creating user...--")
 	conn, err := store.dbpool.Acquire(ctx)
 	if err != nil {
 		log.Fatalf("Unable to acquire connection: %v", err)
@@ -74,11 +73,10 @@ func (store *StoreImp) CreateAccountTx(ctx context.Context, arg CreateAccountTxP
 		log.Printf("failed to commit transaction: %v", err.Error())
 		return nil, err
 	}
-	fmt.Println("--commit successfully--")
+	fmt.Println("--User created successfully--")
 
 	userInfo := UserInfo{
 		Username:        user.Username,
-		UserUid:         user.Uid,
 		UserId:          user.ID,
 		Name:            profile.Name,
 		ProfileImageUrl: nil,

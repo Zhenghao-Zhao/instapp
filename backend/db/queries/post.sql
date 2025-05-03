@@ -4,175 +4,147 @@ INSERT INTO posts (content, user_id)
 RETURNING
     *;
 
--- name: DeletePostByPostUid :exec
+-- name: DeletePostByPostID :exec
 DELETE FROM posts p
-WHERE p.uid = @post_uid;
-
--- name: GetPaginatedPostsByUserUid :many
-WITH images AS (
-    SELECT
-        p.id AS post_id,
-        json_agg(i.uid) AS image_uids
-    FROM
-        posts p
-        LEFT JOIN public.post_images i ON p.id = i.post_id
-    GROUP BY
-        p.id
-)
-SELECT
-    p.id AS post_id,
-    p.uid AS post_uid,
-    p.user_id AS owner_id,
-    p.created_at AS created_at,
-    p.content AS content,
-    COALESCE(t1.like_count, 0) AS like_count,
-    COALESCE(t2.comment_count, 0) AS comment_count,
-    (l.id IS NOT NULL)::bool AS has_liked,
-    i.image_uids AS image_uids,
-    u.uid AS owner_uid,
-    u.username AS owner_username,
-    profiles.name AS owner_name,
-    profiles.profile_image AS owner_profile_image,
-    (f.id IS NOT NULL)::bool AS owner_is_following
-FROM
-    posts p
-    LEFT JOIN users u ON p.user_id = u.id
-    LEFT JOIN profiles ON u.id = profiles.user_id
-    LEFT JOIN (
-        SELECT
-            post_id,
-            COUNT(*) AS like_count
-        FROM
-            post_likes
-        GROUP BY
-            post_id) t1 ON p.id = t1.post_id
-    LEFT JOIN (
-        SELECT
-            post_id,
-            COUNT(*) AS comment_count
-        FROM
-            comments
-        GROUP BY
-            post_id) t2 ON p.id = t2.post_id
-    LEFT JOIN post_likes l ON l.post_id = p.id
-        AND l.user_id = @my_user_id
-    LEFT JOIN images i ON i.post_id = p.id
-    LEFT JOIN followers f ON f.followee_id = p.user_id
-        AND f.follower_id = @my_user_id
-WHERE
-    u.uid = @user_uid
-ORDER BY
-    p.created_at DESC OFFSET sqlc.arg ('offset')
-LIMIT sqlc.arg ('limit');
+WHERE p.id = @post_id;
 
 -- name: GetPaginatedPostsByUsername :many
-WITH images AS (
+WITH post_stats AS (
     SELECT
         p.id AS post_id,
-        json_agg(i.uid) AS image_uids
+        COUNT(DISTINCT pl.id) AS like_count,
+        COUNT(DISTINCT c.id) AS comment_count,
+        COALESCE(BOOL_OR(pl.user_id = @my_user_id), FALSE)::boolean AS has_liked,
+        json_agg(DISTINCT pi.uid) FILTER (WHERE pi.uid IS NOT NULL) AS image_uids
     FROM
         posts p
-        LEFT JOIN public.post_images i ON p.id = i.post_id
-    GROUP BY
-        p.id
+        LEFT JOIN post_likes pl ON p.id = pl.post_id
+        LEFT JOIN comments c ON p.id = c.post_id
+        LEFT JOIN post_images pi ON p.id = pi.post_id
+    WHERE
+        p.user_id = (
+            SELECT
+                id
+            FROM
+                users u
+            WHERE
+                u.username = @username)
+            AND (@last_post_id::bigint = 0
+                OR p.id < @last_post_id::bigint)
+        GROUP BY
+            p.id
 )
 SELECT
     p.id AS post_id,
-    p.uid AS post_uid,
     p.user_id AS owner_id,
     p.created_at AS created_at,
     p.content AS content,
-    COALESCE(t1.like_count, 0) AS like_count,
-    COALESCE(t2.comment_count, 0) AS comment_count,
-    (l.id IS NOT NULL)::bool AS has_liked,
-    i.image_uids AS image_uids,
-    u.uid AS owner_uid,
+    ps.like_count,
+    ps.comment_count,
+    ps.has_liked,
+    ps.image_uids,
     u.username AS owner_username,
-    profiles.name AS owner_name,
-    profiles.profile_image AS owner_profile_image,
-    (f.id IS NOT NULL)::bool AS owner_is_following
+    pr.name AS owner_name,
+    pr.profile_image AS owner_profile_image,
+    EXISTS (
+        SELECT
+            1
+        FROM
+            followers
+        WHERE
+            followee_id = p.user_id
+            AND follower_id = @my_user_id) AS owner_is_following
 FROM
     posts p
-    LEFT JOIN users u ON p.user_id = u.id
-    LEFT JOIN profiles ON u.id = profiles.user_id
-    LEFT JOIN (
-        SELECT
-            post_id,
-            COUNT(*) AS like_count
-        FROM
-            post_likes
-        GROUP BY
-            post_id) t1 ON p.id = t1.post_id
-    LEFT JOIN (
-        SELECT
-            post_id,
-            COUNT(*) AS comment_count
-        FROM
-            comments
-        GROUP BY
-            post_id) t2 ON p.id = t2.post_id
-    LEFT JOIN post_likes l ON l.post_id = p.id
-        AND l.user_id = @my_user_id
-    LEFT JOIN images i ON i.post_id = p.id
-    LEFT JOIN followers f ON f.followee_id = p.user_id
-        AND f.follower_id = @my_user_id
-WHERE
-    u.username = @my_username
+    JOIN users u ON p.user_id = u.id
+    JOIN profiles pr ON u.id = pr.user_id
+    JOIN post_stats ps ON p.id = ps.post_id
 ORDER BY
-    p.created_at DESC OFFSET sqlc.arg ('offset')
+    p.id DESC
 LIMIT sqlc.arg ('limit');
 
--- name: GetPostByPostUID :one
-WITH images AS (
+-- name: GetPostByPostID :one
+WITH post_stats AS (
     SELECT
         p.id AS post_id,
-        json_agg(i.uid) AS image_uids
+        COUNT(DISTINCT pl.id) AS like_count,
+        COUNT(DISTINCT c.id) AS comment_count,
+        COALESCE(BOOL_OR(pl.user_id = @my_user_id), FALSE)::boolean AS has_liked,
+        json_agg(DISTINCT pi.uid) FILTER (WHERE pi.uid IS NOT NULL) AS image_uids
     FROM
         posts p
-        LEFT JOIN public.post_images i ON p.id = i.post_id
+        LEFT JOIN post_likes pl ON p.id = pl.post_id
+        LEFT JOIN comments c ON p.id = c.post_id
+        LEFT JOIN post_images pi ON p.id = pi.post_id
+    WHERE
+        p.id = @post_id
     GROUP BY
         p.id
 )
 SELECT
     p.id AS post_id,
-    p.uid AS post_uid,
     p.user_id AS owner_id,
     p.created_at AS created_at,
     p.content AS content,
-    COALESCE(t1.like_count, 0) AS like_count,
-    COALESCE(t2.comment_count, 0) AS comment_count,
-    (l.id IS NOT NULL)::bool AS has_liked,
-    i.image_uids AS image_uids,
-    u.uid AS owner_uid,
+    ps.like_count,
+    ps.comment_count,
+    ps.has_liked,
+    ps.image_uids,
     u.username AS owner_username,
-    profiles.name AS owner_name,
-    profiles.profile_image AS owner_profile_image,
-    (f.id IS NOT NULL)::bool AS owner_is_following
+    pr.name AS owner_name,
+    pr.profile_image AS owner_profile_image,
+    EXISTS (
+        SELECT
+            1
+        FROM
+            followers
+        WHERE
+            followee_id = p.user_id
+            AND follower_id = @my_user_id) AS owner_is_following
 FROM
     posts p
-    LEFT JOIN users u ON p.user_id = u.id
-    LEFT JOIN profiles ON u.id = profiles.user_id
-    LEFT JOIN (
-        SELECT
-            post_id,
-            COUNT(*) AS like_count
-        FROM
-            post_likes
-        GROUP BY
-            post_id) t1 ON p.id = t1.post_id
-    LEFT JOIN (
-        SELECT
-            post_id,
-            COUNT(*) AS comment_count
-        FROM
-            comments
-        GROUP BY
-            post_id) t2 ON p.id = t2.post_id
-    LEFT JOIN post_likes l ON l.post_id = p.id
-    LEFT JOIN images i ON i.post_id = p.id
-        AND l.user_id = @my_user_id
-    LEFT JOIN followers f ON f.followee_id = p.user_id
-        AND f.follower_id = @my_user_id
-WHERE
-    p.uid = @post_uid;
+    JOIN users u ON p.user_id = u.id
+    JOIN profiles pr ON u.id = pr.user_id
+    JOIN post_stats ps ON p.id = ps.post_id;
+
+-- name: GetFeedPosts :many
+WITH post_stats AS (
+    SELECT
+        p.id AS post_id,
+        COUNT(DISTINCT pl.id) AS like_count,
+        COUNT(DISTINCT c.id) AS comment_count,
+        COALESCE(BOOL_OR(pl.user_id = @my_user_id), FALSE)::boolean AS has_liked,
+        json_agg(DISTINCT pi.uid) FILTER (WHERE pi.uid IS NOT NULL) AS image_uids
+    FROM
+        posts p
+        RIGHT JOIN followers f ON p.user_id = f.followee_id
+            AND f.follower_id = @my_user_id
+        LEFT JOIN post_likes pl ON p.id = pl.post_id
+        LEFT JOIN comments c ON p.id = c.post_id
+        LEFT JOIN post_images pi ON p.id = pi.post_id
+    WHERE (@last_post_id::bigint = 0
+        OR p.id < @last_post_id::bigint)
+GROUP BY
+    p.id
+)
+SELECT
+    p.id AS post_id,
+    p.user_id AS owner_id,
+    p.created_at AS created_at,
+    p.content AS content,
+    ps.like_count,
+    ps.comment_count,
+    ps.has_liked,
+    ps.image_uids,
+    u.username AS owner_username,
+    pr.name AS owner_name,
+    pr.profile_image AS owner_profile_image
+FROM
+    posts p
+    JOIN users u ON p.user_id = u.id
+    JOIN profiles pr ON u.id = pr.user_id
+    JOIN post_stats ps ON p.id = ps.post_id
+ORDER BY
+    p.id DESC
+LIMIT sqlc.arg ('limit');
 

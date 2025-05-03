@@ -1,8 +1,8 @@
 "use client";
-import PostView from "@/app/_components/posts/PostView";
-import { ModalContent } from "@/app/_components/ui/modal";
+import PostView from "@/app/_components/post/PostView";
+import { ModalWrapper } from "@/app/_components/ui/modal";
 import Modal from "@/app/_libs/contexts/providers/ModalContextProivder";
-import { Post } from "@/app/_libs/types";
+import { Post } from "@/app/_libs/types/zod";
 import { useQueries, useQueryClient } from "@tanstack/react-query";
 
 export default function Page({
@@ -31,14 +31,14 @@ export default function Page({
   const post = findPost(post_uid, results);
   return (
     <Modal isRouted>
-      <ModalContent>
+      <ModalWrapper>
         <PostView post={post} />
-      </ModalContent>
+      </ModalWrapper>
     </Modal>
   );
 }
 
-function findPost(post_uid: string, posts: Post[]): Post {
-  const post = posts.find((post) => post.postUid === post_uid);
+function findPost(postId: string, posts: Post[]): Post {
+  const post = posts.find((post) => post.postId === postId);
   return post!;
 }

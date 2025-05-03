@@ -16,12 +16,12 @@ const createPost = `-- name: CreatePost :one
 INSERT INTO posts (content, user_id)
     VALUES ($1, $2)
 RETURNING
-    id, uid, created_at, content, user_id
+    id, created_at, content, user_id
 `
 
 type CreatePostParams struct {
 	Content *string `json:"content"`
-	UserID  int32   `json:"user_id"`
+	UserID  int64   `json:"user_id"`
 }
 
 func (q *Queries) CreatePost(ctx context.Context, arg CreatePostParams) (*Post, error) {
@@ -29,7 +29,6 @@ func (q *Queries) CreatePost(ctx context.Context, arg CreatePostParams) (*Post, 
 	var i Post
 	err := row.Scan(
 		&i.ID,
-		&i.Uid,
 		&i.CreatedAt,
 		&i.Content,
 		&i.UserID,
@@ -37,115 +36,89 @@ func (q *Queries) CreatePost(ctx context.Context, arg CreatePostParams) (*Post, 
 	return &i, err
 }
 
-const deletePostByPostUid = `-- name: DeletePostByPostUid :exec
+const deletePostByPostID = `-- name: DeletePostByPostID :exec
 DELETE FROM posts p
-WHERE p.uid = $1
+WHERE p.id = $1
 `
 
-func (q *Queries) DeletePostByPostUid(ctx context.Context, postUid uuid.UUID) error {
-	_, err := q.db.Exec(ctx, deletePostByPostUid, postUid)
+func (q *Queries) DeletePostByPostID(ctx context.Context, postID int64) error {
+	_, err := q.db.Exec(ctx, deletePostByPostID, postID)
 	return err
 }
 
-const getPaginatedPostsByUserUid = `-- name: GetPaginatedPostsByUserUid :many
-WITH images AS (
+const getFeedPosts = `-- name: GetFeedPosts :many
+WITH post_stats AS (
     SELECT
         p.id AS post_id,
-        json_agg(i.uid) AS image_uids
+        COUNT(DISTINCT pl.id) AS like_count,
+        COUNT(DISTINCT c.id) AS comment_count,
+        COALESCE(BOOL_OR(pl.user_id = $2), FALSE)::boolean AS has_liked,
+        json_agg(DISTINCT pi.uid) FILTER (WHERE pi.uid IS NOT NULL) AS image_uids
     FROM
         posts p
-        LEFT JOIN public.post_images i ON p.id = i.post_id
-    GROUP BY
-        p.id
+        RIGHT JOIN followers f ON p.user_id = f.followee_id
+            AND f.follower_id = $2
+        LEFT JOIN post_likes pl ON p.id = pl.post_id
+        LEFT JOIN comments c ON p.id = c.post_id
+        LEFT JOIN post_images pi ON p.id = pi.post_id
+    WHERE ($3::bigint = 0
+        OR p.id < $3::bigint)
+GROUP BY
+    p.id
 )
 SELECT
     p.id AS post_id,
-    p.uid AS post_uid,
     p.user_id AS owner_id,
     p.created_at AS created_at,
     p.content AS content,
-    COALESCE(t1.like_count, 0) AS like_count,
-    COALESCE(t2.comment_count, 0) AS comment_count,
-    (l.id IS NOT NULL)::bool AS has_liked,
-    i.image_uids AS image_uids,
-    u.uid AS owner_uid,
+    ps.like_count,
+    ps.comment_count,
+    ps.has_liked,
+    ps.image_uids,
     u.username AS owner_username,
-    profiles.name AS owner_name,
-    profiles.profile_image AS owner_profile_image,
-    (f.id IS NOT NULL)::bool AS owner_is_following
+    pr.name AS owner_name,
+    pr.profile_image AS owner_profile_image
 FROM
     posts p
-    LEFT JOIN users u ON p.user_id = u.id
-    LEFT JOIN profiles ON u.id = profiles.user_id
-    LEFT JOIN (
-        SELECT
-            post_id,
-            COUNT(*) AS like_count
-        FROM
-            post_likes
-        GROUP BY
-            post_id) t1 ON p.id = t1.post_id
-    LEFT JOIN (
-        SELECT
-            post_id,
-            COUNT(*) AS comment_count
-        FROM
-            comments
-        GROUP BY
-            post_id) t2 ON p.id = t2.post_id
-    LEFT JOIN post_likes l ON l.post_id = p.id
-        AND l.user_id = $1
-    LEFT JOIN images i ON i.post_id = p.id
-    LEFT JOIN followers f ON f.followee_id = p.user_id
-        AND f.follower_id = $1
-WHERE
-    u.uid = $2
+    JOIN users u ON p.user_id = u.id
+    JOIN profiles pr ON u.id = pr.user_id
+    JOIN post_stats ps ON p.id = ps.post_id
 ORDER BY
-    p.created_at DESC OFFSET $3
-LIMIT $4
+    p.id DESC
+LIMIT $1
 `
 
-type GetPaginatedPostsByUserUidParams struct {
-	MyUserID int32     `json:"my_user_id"`
-	UserUid  uuid.UUID `json:"user_uid"`
-	Offset   int32     `json:"offset"`
-	Limit    int32     `json:"limit"`
+type GetFeedPostsParams struct {
+	Limit      int32 `json:"limit"`
+	MyUserID   int64 `json:"my_user_id"`
+	LastPostID int64 `json:"last_post_id"`
 }
 
-type GetPaginatedPostsByUserUidRow struct {
-	PostID            int32              `json:"post_id"`
-	PostUid           uuid.UUID          `json:"post_uid"`
-	OwnerID           int32              `json:"owner_id"`
+type GetFeedPostsRow struct {
+	PostID            int64              `json:"post_id"`
+	OwnerID           int64              `json:"owner_id"`
 	CreatedAt         pgtype.Timestamptz `json:"created_at"`
 	Content           *string            `json:"content"`
 	LikeCount         int64              `json:"like_count"`
 	CommentCount      int64              `json:"comment_count"`
 	HasLiked          bool               `json:"has_liked"`
 	ImageUids         []byte             `json:"image_uids"`
-	OwnerUid          uuid.UUID          `json:"owner_uid"`
-	OwnerUsername     *string            `json:"owner_username"`
-	OwnerName         *string            `json:"owner_name"`
+	OwnerUsername     string             `json:"owner_username"`
+	OwnerName         string             `json:"owner_name"`
 	OwnerProfileImage uuid.UUID          `json:"owner_profile_image"`
-	OwnerIsFollowing  bool               `json:"owner_is_following"`
 }
 
-func (q *Queries) GetPaginatedPostsByUserUid(ctx context.Context, arg GetPaginatedPostsByUserUidParams) ([]*GetPaginatedPostsByUserUidRow, error) {
-	rows, err := q.db.Query(ctx, getPaginatedPostsByUserUid,
-		arg.MyUserID,
-		arg.UserUid,
-		arg.Offset,
-		arg.Limit,
-	)
+func (q *Queries) GetFeedPosts(ctx context.Context, arg GetFeedPostsParams) ([]*GetFeedPostsRow, error) {
+	rows, err := q.db.Query(ctx, getFeedPosts, arg.Limit, arg.MyUserID, arg.LastPostID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*GetPaginatedPostsByUserUidRow
+	var items []*GetFeedPostsRow
 	for rows.Next() {
-		var i GetPaginatedPostsByUserUidRow
+		var i GetFeedPostsRow
 		if err := rows.Scan(
 			&i.PostID,
-			&i.PostUid,
 			&i.OwnerID,
 			&i.CreatedAt,
 			&i.Content,
@@ -153,11 +126,9 @@ func (q *Queries) GetPaginatedPostsByUserUid(ctx context.Context, arg GetPaginat
 			&i.CommentCount,
 			&i.HasLiked,
 			&i.ImageUids,
-			&i.OwnerUid,
 			&i.OwnerUsername,
 			&i.OwnerName,
 			&i.OwnerProfileImage,
-			&i.OwnerIsFollowing,
 		); err != nil {
 			return nil, err
 		}
@@ -170,83 +141,79 @@ func (q *Queries) GetPaginatedPostsByUserUid(ctx context.Context, arg GetPaginat
 }
 
 const getPaginatedPostsByUsername = `-- name: GetPaginatedPostsByUsername :many
-WITH images AS (
+WITH post_stats AS (
     SELECT
         p.id AS post_id,
-        json_agg(i.uid) AS image_uids
+        COUNT(DISTINCT pl.id) AS like_count,
+        COUNT(DISTINCT c.id) AS comment_count,
+        COALESCE(BOOL_OR(pl.user_id = $1), FALSE)::boolean AS has_liked,
+        json_agg(DISTINCT pi.uid) FILTER (WHERE pi.uid IS NOT NULL) AS image_uids
     FROM
         posts p
-        LEFT JOIN public.post_images i ON p.id = i.post_id
-    GROUP BY
-        p.id
+        LEFT JOIN post_likes pl ON p.id = pl.post_id
+        LEFT JOIN comments c ON p.id = c.post_id
+        LEFT JOIN post_images pi ON p.id = pi.post_id
+    WHERE
+        p.user_id = (
+            SELECT
+                id
+            FROM
+                users u
+            WHERE
+                u.username = $3)
+            AND ($4::bigint = 0
+                OR p.id < $4::bigint)
+        GROUP BY
+            p.id
 )
 SELECT
     p.id AS post_id,
-    p.uid AS post_uid,
     p.user_id AS owner_id,
     p.created_at AS created_at,
     p.content AS content,
-    COALESCE(t1.like_count, 0) AS like_count,
-    COALESCE(t2.comment_count, 0) AS comment_count,
-    (l.id IS NOT NULL)::bool AS has_liked,
-    i.image_uids AS image_uids,
-    u.uid AS owner_uid,
+    ps.like_count,
+    ps.comment_count,
+    ps.has_liked,
+    ps.image_uids,
     u.username AS owner_username,
-    profiles.name AS owner_name,
-    profiles.profile_image AS owner_profile_image,
-    (f.id IS NOT NULL)::bool AS owner_is_following
+    pr.name AS owner_name,
+    pr.profile_image AS owner_profile_image,
+    EXISTS (
+        SELECT
+            1
+        FROM
+            followers
+        WHERE
+            followee_id = p.user_id
+            AND follower_id = $1) AS owner_is_following
 FROM
     posts p
-    LEFT JOIN users u ON p.user_id = u.id
-    LEFT JOIN profiles ON u.id = profiles.user_id
-    LEFT JOIN (
-        SELECT
-            post_id,
-            COUNT(*) AS like_count
-        FROM
-            post_likes
-        GROUP BY
-            post_id) t1 ON p.id = t1.post_id
-    LEFT JOIN (
-        SELECT
-            post_id,
-            COUNT(*) AS comment_count
-        FROM
-            comments
-        GROUP BY
-            post_id) t2 ON p.id = t2.post_id
-    LEFT JOIN post_likes l ON l.post_id = p.id
-        AND l.user_id = $1
-    LEFT JOIN images i ON i.post_id = p.id
-    LEFT JOIN followers f ON f.followee_id = p.user_id
-        AND f.follower_id = $1
-WHERE
-    u.username = $2
+    JOIN users u ON p.user_id = u.id
+    JOIN profiles pr ON u.id = pr.user_id
+    JOIN post_stats ps ON p.id = ps.post_id
 ORDER BY
-    p.created_at DESC OFFSET $3
-LIMIT $4
+    p.id DESC
+LIMIT $2
 `
 
 type GetPaginatedPostsByUsernameParams struct {
-	MyUserID   int32  `json:"my_user_id"`
-	MyUsername string `json:"my_username"`
-	Offset     int32  `json:"offset"`
+	MyUserID   int64  `json:"my_user_id"`
 	Limit      int32  `json:"limit"`
+	Username   string `json:"username"`
+	LastPostID int64  `json:"last_post_id"`
 }
 
 type GetPaginatedPostsByUsernameRow struct {
-	PostID            int32              `json:"post_id"`
-	PostUid           uuid.UUID          `json:"post_uid"`
-	OwnerID           int32              `json:"owner_id"`
+	PostID            int64              `json:"post_id"`
+	OwnerID           int64              `json:"owner_id"`
 	CreatedAt         pgtype.Timestamptz `json:"created_at"`
 	Content           *string            `json:"content"`
 	LikeCount         int64              `json:"like_count"`
 	CommentCount      int64              `json:"comment_count"`
 	HasLiked          bool               `json:"has_liked"`
 	ImageUids         []byte             `json:"image_uids"`
-	OwnerUid          uuid.UUID          `json:"owner_uid"`
-	OwnerUsername     *string            `json:"owner_username"`
-	OwnerName         *string            `json:"owner_name"`
+	OwnerUsername     string             `json:"owner_username"`
+	OwnerName         string             `json:"owner_name"`
 	OwnerProfileImage uuid.UUID          `json:"owner_profile_image"`
 	OwnerIsFollowing  bool               `json:"owner_is_following"`
 }
@@ -254,9 +221,9 @@ type GetPaginatedPostsByUsernameRow struct {
 func (q *Queries) GetPaginatedPostsByUsername(ctx context.Context, arg GetPaginatedPostsByUsernameParams) ([]*GetPaginatedPostsByUsernameRow, error) {
 	rows, err := q.db.Query(ctx, getPaginatedPostsByUsername,
 		arg.MyUserID,
-		arg.MyUsername,
-		arg.Offset,
 		arg.Limit,
+		arg.Username,
+		arg.LastPostID,
 	)
 	if err != nil {
 		return nil, err
@@ -267,7 +234,6 @@ func (q *Queries) GetPaginatedPostsByUsername(ctx context.Context, arg GetPagina
 		var i GetPaginatedPostsByUsernameRow
 		if err := rows.Scan(
 			&i.PostID,
-			&i.PostUid,
 			&i.OwnerID,
 			&i.CreatedAt,
 			&i.Content,
@@ -275,7 +241,6 @@ func (q *Queries) GetPaginatedPostsByUsername(ctx context.Context, arg GetPagina
 			&i.CommentCount,
 			&i.HasLiked,
 			&i.ImageUids,
-			&i.OwnerUid,
 			&i.OwnerUsername,
 			&i.OwnerName,
 			&i.OwnerProfileImage,
@@ -291,89 +256,76 @@ func (q *Queries) GetPaginatedPostsByUsername(ctx context.Context, arg GetPagina
 	return items, nil
 }
 
-const getPostByPostUID = `-- name: GetPostByPostUID :one
-WITH images AS (
+const getPostByPostID = `-- name: GetPostByPostID :one
+WITH post_stats AS (
     SELECT
         p.id AS post_id,
-        json_agg(i.uid) AS image_uids
+        COUNT(DISTINCT pl.id) AS like_count,
+        COUNT(DISTINCT c.id) AS comment_count,
+        COALESCE(BOOL_OR(pl.user_id = $1), FALSE)::boolean AS has_liked,
+        json_agg(DISTINCT pi.uid) FILTER (WHERE pi.uid IS NOT NULL) AS image_uids
     FROM
         posts p
-        LEFT JOIN public.post_images i ON p.id = i.post_id
+        LEFT JOIN post_likes pl ON p.id = pl.post_id
+        LEFT JOIN comments c ON p.id = c.post_id
+        LEFT JOIN post_images pi ON p.id = pi.post_id
+    WHERE
+        p.id = $2
     GROUP BY
         p.id
 )
 SELECT
     p.id AS post_id,
-    p.uid AS post_uid,
     p.user_id AS owner_id,
     p.created_at AS created_at,
     p.content AS content,
-    COALESCE(t1.like_count, 0) AS like_count,
-    COALESCE(t2.comment_count, 0) AS comment_count,
-    (l.id IS NOT NULL)::bool AS has_liked,
-    i.image_uids AS image_uids,
-    u.uid AS owner_uid,
+    ps.like_count,
+    ps.comment_count,
+    ps.has_liked,
+    ps.image_uids,
     u.username AS owner_username,
-    profiles.name AS owner_name,
-    profiles.profile_image AS owner_profile_image,
-    (f.id IS NOT NULL)::bool AS owner_is_following
+    pr.name AS owner_name,
+    pr.profile_image AS owner_profile_image,
+    EXISTS (
+        SELECT
+            1
+        FROM
+            followers
+        WHERE
+            followee_id = p.user_id
+            AND follower_id = $1) AS owner_is_following
 FROM
     posts p
-    LEFT JOIN users u ON p.user_id = u.id
-    LEFT JOIN profiles ON u.id = profiles.user_id
-    LEFT JOIN (
-        SELECT
-            post_id,
-            COUNT(*) AS like_count
-        FROM
-            post_likes
-        GROUP BY
-            post_id) t1 ON p.id = t1.post_id
-    LEFT JOIN (
-        SELECT
-            post_id,
-            COUNT(*) AS comment_count
-        FROM
-            comments
-        GROUP BY
-            post_id) t2 ON p.id = t2.post_id
-    LEFT JOIN post_likes l ON l.post_id = p.id
-    LEFT JOIN images i ON i.post_id = p.id
-        AND l.user_id = $1
-    LEFT JOIN followers f ON f.followee_id = p.user_id
-        AND f.follower_id = $1
-WHERE
-    p.uid = $2
+    JOIN users u ON p.user_id = u.id
+    JOIN profiles pr ON u.id = pr.user_id
+    JOIN post_stats ps ON p.id = ps.post_id
 `
 
-type GetPostByPostUIDParams struct {
-	MyUserID int32     `json:"my_user_id"`
-	PostUid  uuid.UUID `json:"post_uid"`
+type GetPostByPostIDParams struct {
+	MyUserID int64 `json:"my_user_id"`
+	PostID   int64 `json:"post_id"`
 }
 
-type GetPostByPostUIDRow struct {
-	PostID            int32              `json:"post_id"`
-	PostUid           uuid.UUID          `json:"post_uid"`
-	OwnerID           int32              `json:"owner_id"`
+type GetPostByPostIDRow struct {
+	PostID            int64              `json:"post_id"`
+	OwnerID           int64              `json:"owner_id"`
 	CreatedAt         pgtype.Timestamptz `json:"created_at"`
 	Content           *string            `json:"content"`
 	LikeCount         int64              `json:"like_count"`
 	CommentCount      int64              `json:"comment_count"`
 	HasLiked          bool               `json:"has_liked"`
 	ImageUids         []byte             `json:"image_uids"`
-	OwnerUid          uuid.UUID          `json:"owner_uid"`
-	OwnerUsername     *string            `json:"owner_username"`
-	OwnerName         *string            `json:"owner_name"`
+	OwnerUsername     string             `json:"owner_username"`
+	OwnerName         string             `json:"owner_name"`
 	OwnerProfileImage uuid.UUID          `json:"owner_profile_image"`
 	OwnerIsFollowing  bool               `json:"owner_is_following"`
 }
 
-func (q *Queries) GetPostByPostUID(ctx context.Context, arg GetPostByPostUIDParams) (*GetPostByPostUIDRow, error) {
-	row := q.db.QueryRow(ctx, getPostByPostUID, arg.MyUserID, arg.PostUid)
-	var i GetPostByPostUIDRow
+func (q *Queries) GetPostByPostID(ctx context.Context, arg GetPostByPostIDParams) (*GetPostByPostIDRow, error) {
+	row := q.db.QueryRow(ctx, getPostByPostID, arg.MyUserID, arg.PostID)
+	var i GetPostByPostIDRow
 	err := row.Scan(
 		&i.PostID,
-		&i.PostUid,
 		&i.OwnerID,
 		&i.CreatedAt,
 		&i.Content,
@@ -381,7 +333,6 @@ func (q *Queries) GetPostByPostUID(ctx context.Context, arg GetPostByPostUIDPara
 		&i.CommentCount,
 		&i.HasLiked,
 		&i.ImageUids,
-		&i.OwnerUid,
 		&i.OwnerUsername,
 		&i.OwnerName,
 		&i.OwnerProfileImage,

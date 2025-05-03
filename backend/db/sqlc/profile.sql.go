@@ -20,7 +20,7 @@ RETURNING
 
 type CreateProfileParams struct {
 	Name   string `json:"name"`
-	UserID int32  `json:"user_id"`
+	UserID int64  `json:"user_id"`
 }
 
 func (q *Queries) CreateProfile(ctx context.Context, arg CreateProfileParams) (*Profile, error) {
@@ -38,40 +38,34 @@ func (q *Queries) CreateProfile(ctx context.Context, arg CreateProfileParams) (*
 
 const getProfileByUsernameOrID = `-- name: GetProfileByUsernameOrID :one
 SELECT
-    u.uid AS user_uid,
+    u.id AS user_id,
     u.username AS username,
     p.name AS name,
     p.profile_image AS profile_image,
-    COALESCE(t1.follower_count, 0) AS follower_count,
-    COALESCE(t2.followee_count, 0) AS followee_count,
-    COALESCE(t3.post_count, 0) AS post_count,
-    (f.id IS NOT NULL)::bool AS is_following
-FROM
-    profiles p
-    LEFT JOIN (
+    (
         SELECT
-            followee_id,
-            count(*) AS follower_count
+            count(*)
         FROM
             followers
-        GROUP BY
-            followee_id) t1 ON p.id = t1.followee_id
-    LEFT JOIN (
+        WHERE
+            followee_id = p.user_id) AS follower_count,
+    (
         SELECT
-            follower_id,
-            count(*) AS followee_count
+            count(*)
         FROM
             followers
-        GROUP BY
-            follower_id) t2 ON p.id = t2.follower_id
-    LEFT JOIN (
+        WHERE
+            follower_id = p.user_id) AS followee_count,
+    (
         SELECT
-            user_id,
-            count(*) AS post_count
+            count(*)
         FROM
             posts
-        GROUP BY
-            user_id) t3 ON p.user_id = t3.user_id
+        WHERE
+            posts.user_id = p.user_id) AS post_count,
+    (f.follower_id IS NOT NULL)::bool AS is_following
+FROM
+    profiles p
     LEFT JOIN followers f ON f.followee_id = p.user_id
         AND f.follower_id = $1
     LEFT JOIN users u ON p.user_id = u.id
@@ -81,13 +75,13 @@ WHERE
 `
 
 type GetProfileByUsernameOrIDParams struct {
-	MyUserID       int32  `json:"my_user_id"`
-	TargetUserID   int32  `json:"target_user_id"`
+	MyUserID       int64  `json:"my_user_id"`
+	TargetUserID   int64  `json:"target_user_id"`
 	TargetUsername string `json:"target_username"`
 }
 
 type GetProfileByUsernameOrIDRow struct {
-	UserUid       uuid.UUID `json:"user_uid"`
+	UserID        *int64    `json:"user_id"`
 	Username      *string   `json:"username"`
 	Name          string    `json:"name"`
 	ProfileImage  uuid.UUID `json:"profile_image"`
@@ -101,7 +95,7 @@ func (q *Queries) GetProfileByUsernameOrID(ctx context.Context, arg GetProfileBy
 	row := q.db.QueryRow(ctx, getProfileByUsernameOrID, arg.MyUserID, arg.TargetUserID, arg.TargetUsername)
 	var i GetProfileByUsernameOrIDRow
 	err := row.Scan(
-		&i.UserUid,
+		&i.UserID,
 		&i.Username,
 		&i.Name,
 		&i.ProfileImage,
@@ -126,7 +120,7 @@ RETURNING
 
 type UploadProfileImageParams struct {
 	ImageUid uuid.UUID `json:"image_uid"`
-	MyUserID int32     `json:"my_user_id"`
+	MyUserID int64     `json:"my_user_id"`
 }
 
 func (q *Queries) UploadProfileImage(ctx context.Context, arg UploadProfileImageParams) (uuid.UUID, error) {

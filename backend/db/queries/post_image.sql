@@ -9,6 +9,5 @@ SELECT
 FROM
     post_images i
 WHERE
-    i.post_id = ANY (@post_ids::int[]);
-
+    i.post_id = ANY (@post_ids::bigint[]);
 

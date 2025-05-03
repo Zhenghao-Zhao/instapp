@@ -1,13 +1,14 @@
+import { isAxiosError } from "axios";
 import { RefObject } from "react";
-import { Dropdown } from "../constants";
-import { DropdownPosition } from "../types";
+import { Dropdown, UNEXPECTED_ERROR_MESSAGE } from "../vars/constants";
+import { ApiError, DropdownPosition } from "../vars/types";
 
 export function delay(t: number = 3000) {
   return new Promise((resolve) => setTimeout(resolve, t));
 }
 
 export function dataURLtoBlob(dataURI: string) {
-  // src: https://stackoverflow.com/questions/12168909/blob-from-dataurl
+  // ref: https://stackoverflow.com/questions/12168909/blob-from-dataurl
   var byteString = atob(dataURI.split(",")[1]);
   var mimeString = dataURI.split(",")[0].split(":")[1].split(";")[0];
   var ab = new ArrayBuffer(byteString.length);
@@ -61,7 +62,7 @@ export const formatDate = (rawPostDate: string) => {
   return postDate.toLocaleDateString(undefined, options);
 };
 
-const calcPosition = (
+const calPosition = (
   openerRef: RefObject<HTMLElement>,
   contentRef: RefObject<HTMLElement>,
 ): DropdownPosition => {
@@ -92,7 +93,7 @@ export function getOverlayPosition(
   setPosition: (p: DropdownPosition) => void,
 ) {
   if (!openerRef.current || !contentRef.current) return;
-  const position = calcPosition(openerRef, contentRef);
+  const position = calPosition(openerRef, contentRef);
   setPosition(position);
 }
 
@@ -101,16 +102,12 @@ export function withCountability(
   singleForm: string,
   pluralForm: string,
 ) {
-  return `${n} ${getCountability(n, singleForm, pluralForm)}`;
+  return `${n} ${pluralize(n, singleForm, pluralForm)}`;
 }
 
-export function getCountability(
-  n: number | null | undefined,
-  singleForm: string,
-  pluralForm: string,
-) {
-  if (n === null || n === undefined) return singleForm;
-  return `${n > 1 ? pluralForm : singleForm}`;
+export function pluralize(n: number, singleForm: string, pluralForm?: string) {
+  if (n == 1) return singleForm;
+  return pluralForm || singleForm + "s";
 }
 
 export function getAbsoluteURL(subdomain: string) {
@@ -150,3 +147,18 @@ export function debounce<F extends (...args: any[]) => ReturnType<F>>(
     }, timeout);
   };
 }
+
+export const fromError = (e: unknown): ApiError => {
+  if (isAxiosError(e)) {
+    const serverErrorMessage =
+      e.response?.data?.message ?? UNEXPECTED_ERROR_MESSAGE;
+    const status = e.response?.status;
+    return {
+      message: serverErrorMessage,
+      status,
+    };
+  }
+  return {
+    message: UNEXPECTED_ERROR_MESSAGE,
+  };
+};

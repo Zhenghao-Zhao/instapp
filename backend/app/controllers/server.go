@@ -14,7 +14,7 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/zhenghao-zhao/instapp/app/utils/auth"
+	"github.com/zhenghao-zhao/instapp/app/auth"
 	"github.com/zhenghao-zhao/instapp/app/utils/image"
 	"github.com/zhenghao-zhao/instapp/config"
 	"github.com/zhenghao-zhao/instapp/db"
@@ -65,7 +65,7 @@ func (s *Server) Run() {
 
 	// Configure CORS
 	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization"})
-	originsOk := handlers.AllowedOrigins([]string{"http://localhost:3000"}) // Replace with your React app's origin
+	originsOk := handlers.AllowedOrigins([]string{"http://localhost:3000"})
 	methodsOk := handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE", "OPTIONS"})
 	credentialsOk := handlers.AllowCredentials()
 	handler := handlers.CORS(headersOk, originsOk, methodsOk, credentialsOk)(s.Router)

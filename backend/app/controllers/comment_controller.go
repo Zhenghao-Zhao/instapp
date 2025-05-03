@@ -7,15 +7,17 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/zhenghao-zhao/instapp/app/utils/api"
-	"github.com/zhenghao-zhao/instapp/app/utils/auth"
+	"github.com/zhenghao-zhao/instapp/app/api"
+	"github.com/zhenghao-zhao/instapp/app/auth"
 	db "github.com/zhenghao-zhao/instapp/db/sqlc"
 )
+
+const CommentPageLimit = 10
 
 func (s *Server) GetCommentsHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Getting post comments")
-		postUid, err := GetUidFromRoute(r, "postUid")
+		postId, err := GetIdFromRoute(r, "postId")
 		if err != nil {
 			log.Printf("failed to scan postUID from route: %v", err.Error())
 			api.JSONResponse(w, api.GenericErrorResp)
@@ -35,14 +37,14 @@ func (s *Server) GetCommentsHandler() http.HandlerFunc {
 			return
 		}
 
-		params := db.GetPaginatedCommentsByPostUIDParams{
+		params := db.GetPaginatedCommentsByPostIDParams{
 			MyUserID: myUserId,
-			PostUid:  postUid,
+			PostID:   postId,
 			Offset:   int32(pageNum * CommentPageLimit),
 			Limit:    CommentPageLimit,
 		}
 
-		data, err := s.GetPaginatedCommentsByPostUID(r.Context(), params)
+		data, err := s.GetPaginatedCommentsByPostID(r.Context(), params)
 		if err != nil {
 			log.Printf("failed to get paginated comments:%v", err.Error())
 			api.JSONResponse(w, api.GenericErrorResp)
@@ -53,19 +55,19 @@ func (s *Server) GetCommentsHandler() http.HandlerFunc {
 
 		for i, row := range data {
 
-			owner := AuthProfileDTO{
-				UserUid:         row.OwnerUid.String(),
+			owner := UserProfileDTO{
+				UserId:          strconv.FormatInt(*row.OwnerID, 10),
 				Username:        *row.OwnerUsername,
 				Name:            *row.OwnerName,
 				ProfileImageUrl: s.GetImageUrl(row.OwnerProfileImage.String()),
 			}
 			comments[i] = CommentDTO{
-				CreatedAt:  ConvertTime(row.CreatedAt),
-				CommentUid: row.CommentUid.String(),
-				Content:    row.Content,
-				LikeCount:  row.LikesCount,
-				HasLiked:   row.HasLiked,
-				Owner:      owner,
+				CreatedAt: ConvertTime(row.CreatedAt),
+				CommentId: strconv.FormatInt(row.CommentID, 10),
+				Content:   row.Content,
+				LikeCount: row.LikesCount,
+				HasLiked:  row.HasLiked,
+				Owner:     owner,
 			}
 		}
 
@@ -75,7 +77,7 @@ func (s *Server) GetCommentsHandler() http.HandlerFunc {
 			nextCursor = &nextPage
 		}
 		resp := api.ApiResponse{
-			Payload: PageDTO[CommentDTO]{
+			Data: PageDTO[CommentDTO]{
 				Data:       comments,
 				NextCursor: nextCursor,
 			},
@@ -87,7 +89,7 @@ func (s *Server) GetCommentsHandler() http.HandlerFunc {
 
 func (s *Server) LikeCommentHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		commentUid, err := GetUidFromRoute(r, "commentUid")
+		commentId, err := GetIdFromRoute(r, "commentId")
 		if err != nil {
 			log.Printf("failed to scan postUID from route: %v", err.Error())
 			api.JSONResponse(w, api.GenericErrorResp)
@@ -96,8 +98,8 @@ func (s *Server) LikeCommentHandler() http.HandlerFunc {
 
 		if myUserID, err := auth.GetSessionUserId(r); err == nil {
 			params := db.CreateCommentLikeParams{
-				UserID:     myUserID,
-				CommentUid: commentUid,
+				UserID:    myUserID,
+				CommentID: commentId,
 			}
 
 			data, err := s.CreateCommentLike(r.Context(), params)
@@ -108,8 +110,8 @@ func (s *Server) LikeCommentHandler() http.HandlerFunc {
 			}
 
 			resp := api.ApiResponse{
-				Payload: data,
-				Code:    http.StatusOK,
+				Data: data,
+				Code: http.StatusOK,
 			}
 
 			api.JSONResponse(w, resp)
@@ -122,7 +124,7 @@ func (s *Server) LikeCommentHandler() http.HandlerFunc {
 
 func (s *Server) UnlikeCommentHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		commentUid, err := GetUidFromRoute(r, "commentUid")
+		commentId, err := GetIdFromRoute(r, "commentId")
 		if err != nil {
 			log.Printf("failed to scan commentUid from route: %v", err.Error())
 			api.JSONResponse(w, api.GenericErrorResp)
@@ -131,8 +133,8 @@ func (s *Server) UnlikeCommentHandler() http.HandlerFunc {
 
 		if myUserID, err := auth.GetSessionUserId(r); err == nil {
 			params := db.DropCommentLikeParams{
-				UserID:     myUserID,
-				CommentUid: commentUid,
+				UserID:    myUserID,
+				CommentID: commentId,
 			}
 
 			err := s.DropCommentLike(r.Context(), params)
@@ -151,7 +153,6 @@ func (s *Server) UnlikeCommentHandler() http.HandlerFunc {
 }
 
 type CommentParams struct {
-	PostUid string `json:"postUid"`
 	Content string `json:"content"`
 }
 
@@ -161,13 +162,7 @@ func (s *Server) CreateCommentHandler() http.HandlerFunc {
 		err := json.NewDecoder(r.Body).Decode(&commentParams)
 		if err != nil {
 			log.Printf("failed to parse comment params from route: %v", err.Error())
-			api.JSONResponse(w, api.IncompleteRequestPayloadResp)
-			return
-		}
-		postUid, err := ParseUidString(commentParams.PostUid)
-		if err != nil {
-			log.Printf("failed to convert uuid string to uuid: %v", err.Error())
-			api.JSONResponse(w, api.IncompleteRequestPayloadResp)
+			api.JSONResponse(w, api.InvalidRequestPayloadResp)
 			return
 		}
 		userId, err := auth.GetSessionUserId(r)
@@ -176,15 +171,20 @@ func (s *Server) CreateCommentHandler() http.HandlerFunc {
 			api.JSONResponse(w, api.AuthErrorResp)
 			return
 		}
+		postId, err := GetIdFromRoute(r, "postId")
+		if err != nil {
+			log.Printf("failed to parse post id from route: %v", err.Error())
+			api.JSONResponse(w, api.GenericErrorResp)
+		}
 		params := db.CreateCommentParams{
 			Content: commentParams.Content,
 			UserID:  userId,
-			PostUid: postUid,
+			PostID:  postId,
 		}
 		comment, err := s.CreateComment(r.Context(), params)
 		if err != nil {
 			log.Printf("failed to create comment in db: %v", err.Error())
-			api.JSONResponse(w, handleDBError(err))
+			api.JSONResponse(w, GenDBResponse(err))
 			return
 		}
 		userInfo, err := auth.GetUserSessionInfo(r)
@@ -192,24 +192,24 @@ func (s *Server) CreateCommentHandler() http.HandlerFunc {
 			api.JSONResponse(w, api.GenericErrorResp)
 			return
 		}
-		owner := AuthProfileDTO{
+		owner := UserProfileDTO{
 			Username:        userInfo.Username,
-			UserUid:         userInfo.UserUid.String(),
+			UserId:          strconv.FormatInt(userInfo.UserId, 10),
 			Name:            userInfo.Name,
 			ProfileImageUrl: userInfo.ProfileImageUrl,
 		}
 		commentDto := CommentDTO{
-			CreatedAt:  ConvertTime(comment.CreatedAt),
-			CommentUid: comment.Uid.String(),
-			Content:    comment.Content,
-			LikeCount:  0,
-			HasLiked:   false,
-			Owner:      owner,
+			CreatedAt: ConvertTime(comment.CreatedAt),
+			CommentId: strconv.FormatInt(comment.ID, 10),
+			Content:   comment.Content,
+			LikeCount: 0,
+			HasLiked:  false,
+			Owner:     owner,
 		}
 
 		resp := api.ApiResponse{
-			Payload: commentDto,
-			Code:    http.StatusOK,
+			Data: commentDto,
+			Code: http.StatusOK,
 		}
 		api.JSONResponse(w, resp)
 	}

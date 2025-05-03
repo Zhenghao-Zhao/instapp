@@ -14,29 +14,22 @@ import (
 
 const createComment = `-- name: CreateComment :one
 INSERT INTO comments (content, user_id, post_id)
-    VALUES ($1, $2, (
-            SELECT
-                id
-            FROM
-                posts p
-            WHERE
-                p.uid = $3))
+    VALUES ($1, $2, $3)
 RETURNING
-    id, uid, created_at, content, user_id, post_id
+    id, created_at, content, user_id, post_id
 `
 
 type CreateCommentParams struct {
-	Content string    `json:"content"`
-	UserID  int32     `json:"user_id"`
-	PostUid uuid.UUID `json:"post_uid"`
+	Content string `json:"content"`
+	UserID  int64  `json:"user_id"`
+	PostID  int64  `json:"post_id"`
 }
 
 func (q *Queries) CreateComment(ctx context.Context, arg CreateCommentParams) (*Comment, error) {
-	row := q.db.QueryRow(ctx, createComment, arg.Content, arg.UserID, arg.PostUid)
+	row := q.db.QueryRow(ctx, createComment, arg.Content, arg.UserID, arg.PostID)
 	var i Comment
 	err := row.Scan(
 		&i.ID,
-		&i.Uid,
 		&i.CreatedAt,
 		&i.Content,
 		&i.UserID,
@@ -47,23 +40,23 @@ func (q *Queries) CreateComment(ctx context.Context, arg CreateCommentParams) (*
 
 const deleteComment = `-- name: DeleteComment :exec
 DELETE FROM comments
-WHERE uid = $1
+WHERE id = $1
 `
 
-func (q *Queries) DeleteComment(ctx context.Context, commentUid uuid.UUID) error {
-	_, err := q.db.Exec(ctx, deleteComment, commentUid)
+func (q *Queries) DeleteComment(ctx context.Context, commentID int64) error {
+	_, err := q.db.Exec(ctx, deleteComment, commentID)
 	return err
 }
 
-const getPaginatedCommentsByPostUID = `-- name: GetPaginatedCommentsByPostUID :many
+const getPaginatedCommentsByPostID = `-- name: GetPaginatedCommentsByPostID :many
 SELECT
     c.created_at AS created_at,
-    c.uid AS comment_uid,
+    c.id AS comment_id,
     c.content AS content,
     COALESCE(t.like_count, 0) AS likes_count,
     (l.id IS NOT NULL)::bool AS has_liked,
     u.username AS owner_username,
-    u.uid AS owner_uid,
+    u.id AS owner_id,
     pr.name AS owner_name,
     pr.profile_image AS owner_profile_image
 FROM
@@ -82,35 +75,35 @@ FROM
     LEFT JOIN users u ON c.user_id = u.id
     LEFT JOIN profiles pr ON u.id = pr.user_id
 WHERE
-    po.uid = $2
+    po.id = $2
 ORDER BY
     c.created_at DESC OFFSET $3
 LIMIT $4
 `
 
-type GetPaginatedCommentsByPostUIDParams struct {
-	MyUserID int32     `json:"my_user_id"`
-	PostUid  uuid.UUID `json:"post_uid"`
-	Offset   int32     `json:"offset"`
-	Limit    int32     `json:"limit"`
+type GetPaginatedCommentsByPostIDParams struct {
+	MyUserID int64 `json:"my_user_id"`
+	PostID   int64 `json:"post_id"`
+	Offset   int32 `json:"offset"`
+	Limit    int32 `json:"limit"`
 }
 
-type GetPaginatedCommentsByPostUIDRow struct {
+type GetPaginatedCommentsByPostIDRow struct {
 	CreatedAt         pgtype.Timestamptz `json:"created_at"`
-	CommentUid        uuid.UUID          `json:"comment_uid"`
+	CommentID         int64              `json:"comment_id"`
 	Content           string             `json:"content"`
 	LikesCount        int64              `json:"likes_count"`
 	HasLiked          bool               `json:"has_liked"`
 	OwnerUsername     *string            `json:"owner_username"`
-	OwnerUid          uuid.UUID          `json:"owner_uid"`
+	OwnerID           *int64             `json:"owner_id"`
 	OwnerName         *string            `json:"owner_name"`
 	OwnerProfileImage uuid.UUID          `json:"owner_profile_image"`
 }
 
-func (q *Queries) GetPaginatedCommentsByPostUID(ctx context.Context, arg GetPaginatedCommentsByPostUIDParams) ([]*GetPaginatedCommentsByPostUIDRow, error) {
-	rows, err := q.db.Query(ctx, getPaginatedCommentsByPostUID,
+func (q *Queries) GetPaginatedCommentsByPostID(ctx context.Context, arg GetPaginatedCommentsByPostIDParams) ([]*GetPaginatedCommentsByPostIDRow, error) {
+	rows, err := q.db.Query(ctx, getPaginatedCommentsByPostID,
 		arg.MyUserID,
-		arg.PostUid,
+		arg.PostID,
 		arg.Offset,
 		arg.Limit,
 	)
@@ -118,17 +111,17 @@ func (q *Queries) GetPaginatedCommentsByPostUID(ctx context.Context, arg GetPagi
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*GetPaginatedCommentsByPostUIDRow
+	var items []*GetPaginatedCommentsByPostIDRow
 	for rows.Next() {
-		var i GetPaginatedCommentsByPostUIDRow
+		var i GetPaginatedCommentsByPostIDRow
 		if err := rows.Scan(
 			&i.CreatedAt,
-			&i.CommentUid,
+			&i.CommentID,
 			&i.Content,
 			&i.LikesCount,
 			&i.HasLiked,
 			&i.OwnerUsername,
-			&i.OwnerUid,
+			&i.OwnerID,
 			&i.OwnerName,
 			&i.OwnerProfileImage,
 		); err != nil {

@@ -1,70 +1,28 @@
-import Throbber from "@/app/_components/ui/loaders";
-import { handleToggleFollow } from "@/app/_libs/api/mutations";
-import { useDataContext } from "@/app/_libs/contexts/providers/ServerContextProvider";
-import { Profile } from "@/app/_libs/types";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ButtonHTMLAttributes, useState } from "react";
+import Throbber from "@/app/_components/ui/loaders/Throbber";
+import useToggleFollow from "@/app/_libs/hooks/api/mutations/useToggleFollow";
+import { User } from "@/app/_libs/vars/types";
+import { ButtonHTMLAttributes } from "react";
 import { twMerge } from "tailwind-merge";
 
 interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
-  has_followed: boolean;
-  to_uid: string;
+  isFollowing: boolean;
+  targetProfile: User;
   className?: string;
 }
 
 export default function FollowButton({
-  has_followed,
-  to_uid,
+  isFollowing,
+  targetProfile,
   className,
   ...props
 }: Props) {
-  const queryClient = useQueryClient();
-  const { authProfile } = useDataContext();
-  const [isFollowing, setIsFollowing] = useState(has_followed);
-  const from_uid = authProfile.userUid;
-  const { mutate, isPending } = useMutation({
-    mutationFn: handleToggleFollow,
-    onSuccess: async (data) => {
-      const has_followed = data.data.has_followed;
-      const from_prevData = queryClient.getQueryData<Profile>([
-        "userProfile",
-        from_uid,
-      ]);
-      const to_prevData = queryClient.getQueryData<Profile>([
-        "userProfile",
-        to_uid,
-      ]);
-
-      if (from_prevData) {
-        const from_followeeCount =
-          from_prevData.followeeCount + (has_followed ? 1 : -1);
-
-        queryClient.setQueryData(["userProfile", from_uid], {
-          ...from_prevData,
-          followee_count: from_followeeCount,
-        });
-      }
-
-      if (to_prevData) {
-        const to_followerCount =
-          to_prevData.followerCount + (has_followed ? 1 : -1);
-
-        queryClient.setQueryData(["userProfile", to_uid], {
-          ...to_prevData,
-          follower_count: to_followerCount,
-          has_followed,
-        });
-      }
-
-      setIsFollowing((prev) => !prev);
-    },
-  });
+  const { mutate, isPending } = useToggleFollow(targetProfile.username);
   const handleClick = () => {
-    mutate({ uid: to_uid, to_follow: !isFollowing });
+    mutate({ targetId: targetProfile.userId, willFollow: !isFollowing });
   };
   return (
     <button
-      className={twMerge("bg-blue-500 text-white p-2 rounded-md", className)}
+      className={twMerge("bg-blue-500 p-2 rounded-md", className)}
       onClick={handleClick}
       disabled={isPending}
       {...props}

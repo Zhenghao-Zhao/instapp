@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { PropsWithChildren, Suspense } from "react";
-import ContentLayout from "./(pages)/_layout";
-import { Data } from "./(server)/_server/rsc";
 import Loading from "./(templates)/loading";
-import Providers from "./_libs/contexts";
+import AuthDataWrapper from "./_components/auth/AuthDataWrapper";
+import Providers from "./_libs/contexts/Providers";
+import ContentLayout from "./ContentLayout";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -25,12 +25,12 @@ export default async function RootLayout({
       <body className="relative w-full h-full overscroll-none">
         <Providers>
           <Suspense fallback={<Loading />}>
-            <Data>
+            <AuthDataWrapper>
               <ContentLayout>
                 {modal}
                 {children}
               </ContentLayout>
-            </Data>
+            </AuthDataWrapper>
           </Suspense>
         </Providers>
       </body>

@@ -7,23 +7,22 @@ package sqlc
 
 import (
 	"context"
-
-	"github.com/google/uuid"
 )
 
 const createCommentLike = `-- name: CreateCommentLike :one
 INSERT INTO comment_likes (user_id, comment_id)
-VALUES ($1, (SELECT id FROM comments c WHERE c.uid = $2))
-RETURNING id, comment_id, user_id
+    VALUES ($1, $2)
+RETURNING
+    id, comment_id, user_id
 `
 
 type CreateCommentLikeParams struct {
-	UserID     int32     `json:"user_id"`
-	CommentUid uuid.UUID `json:"comment_uid"`
+	UserID    int64 `json:"user_id"`
+	CommentID int64 `json:"comment_id"`
 }
 
 func (q *Queries) CreateCommentLike(ctx context.Context, arg CreateCommentLikeParams) (*CommentLike, error) {
-	row := q.db.QueryRow(ctx, createCommentLike, arg.UserID, arg.CommentUid)
+	row := q.db.QueryRow(ctx, createCommentLike, arg.UserID, arg.CommentID)
 	var i CommentLike
 	err := row.Scan(&i.ID, &i.CommentID, &i.UserID)
 	return &i, err
@@ -31,52 +30,51 @@ func (q *Queries) CreateCommentLike(ctx context.Context, arg CreateCommentLikePa
 
 const createPostLike = `-- name: CreatePostLike :one
 INSERT INTO post_likes (user_id, post_id)
-VALUES ($1, (SELECT id FROM posts p WHERE p.uid = $2))
-RETURNING id, post_id, user_id
+    VALUES ($1, $2)
+RETURNING
+    id, post_id, user_id
 `
 
 type CreatePostLikeParams struct {
-	UserID  int32     `json:"user_id"`
-	PostUid uuid.UUID `json:"post_uid"`
+	UserID int64 `json:"user_id"`
+	PostID int64 `json:"post_id"`
 }
 
 func (q *Queries) CreatePostLike(ctx context.Context, arg CreatePostLikeParams) (*PostLike, error) {
-	row := q.db.QueryRow(ctx, createPostLike, arg.UserID, arg.PostUid)
+	row := q.db.QueryRow(ctx, createPostLike, arg.UserID, arg.PostID)
 	var i PostLike
 	err := row.Scan(&i.ID, &i.PostID, &i.UserID)
 	return &i, err
 }
 
 const dropCommentLike = `-- name: DropCommentLike :exec
-DELETE
-FROM comment_likes cl
-WHERE comment_id in (SELECT id FROM comments c WHERE c.uid = $1)
-  and cl.user_id = $2
+DELETE FROM comment_likes cl
+WHERE comment_id = $1
+    AND cl.user_id = $2
 `
 
 type DropCommentLikeParams struct {
-	CommentUid uuid.UUID `json:"comment_uid"`
-	UserID     int32     `json:"user_id"`
+	CommentID int64 `json:"comment_id"`
+	UserID    int64 `json:"user_id"`
 }
 
 func (q *Queries) DropCommentLike(ctx context.Context, arg DropCommentLikeParams) error {
-	_, err := q.db.Exec(ctx, dropCommentLike, arg.CommentUid, arg.UserID)
+	_, err := q.db.Exec(ctx, dropCommentLike, arg.CommentID, arg.UserID)
 	return err
 }
 
 const dropPostLike = `-- name: DropPostLike :exec
-DELETE
-FROM post_likes pl
-WHERE post_id in (SELECT id From posts p WHERE p.uid = $1)
-  AND pl.user_id = $2
+DELETE FROM post_likes pl
+WHERE post_id = $1
+    AND pl.user_id = $2
 `
 
 type DropPostLikeParams struct {
-	PostUid uuid.UUID `json:"post_uid"`
-	UserID  int32     `json:"user_id"`
+	PostID int64 `json:"post_id"`
+	UserID int64 `json:"user_id"`
 }
 
 func (q *Queries) DropPostLike(ctx context.Context, arg DropPostLikeParams) error {
-	_, err := q.db.Exec(ctx, dropPostLike, arg.PostUid, arg.UserID)
+	_, err := q.db.Exec(ctx, dropPostLike, arg.PostID, arg.UserID)
 	return err
 }

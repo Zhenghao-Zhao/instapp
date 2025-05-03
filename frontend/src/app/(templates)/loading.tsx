@@ -1,4 +1,4 @@
-import { Spinner } from "../_components/ui/loaders";
+import Spinner from "../_components/ui/loaders/Spinner";
 
 export default function Loading() {
   return (

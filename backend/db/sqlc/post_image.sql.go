@@ -13,7 +13,7 @@ import (
 
 type CreateImagesParams struct {
 	Uid    uuid.UUID `json:"uid"`
-	PostID int32     `json:"post_id"`
+	PostID int64     `json:"post_id"`
 }
 
 const getImagesByPostIds = `-- name: GetImagesByPostIds :many
@@ -23,15 +23,15 @@ SELECT
 FROM
     post_images i
 WHERE
-    i.post_id = ANY ($1::int[])
+    i.post_id = ANY ($1::bigint[])
 `
 
 type GetImagesByPostIdsRow struct {
 	ImageUid uuid.UUID `json:"image_uid"`
-	PostID   int32     `json:"post_id"`
+	PostID   int64     `json:"post_id"`
 }
 
-func (q *Queries) GetImagesByPostIds(ctx context.Context, postIds []int32) ([]*GetImagesByPostIdsRow, error) {
+func (q *Queries) GetImagesByPostIds(ctx context.Context, postIds []int64) ([]*GetImagesByPostIdsRow, error) {
 	rows, err := q.db.Query(ctx, getImagesByPostIds, postIds)
 	if err != nil {
 		return nil, err

@@ -12,28 +12,28 @@ import (
 
 type Querier interface {
 	CheckUserExistsByEmail(ctx context.Context, email string) (bool, error)
+	CheckUserExistsByUsername(ctx context.Context, username string) (bool, error)
 	CreateComment(ctx context.Context, arg CreateCommentParams) (*Comment, error)
 	CreateCommentLike(ctx context.Context, arg CreateCommentLikeParams) (*CommentLike, error)
-	CreateFollower(ctx context.Context, arg CreateFollowerParams) (*Follower, error)
+	CreateFollower(ctx context.Context, arg CreateFollowerParams) error
 	CreateImages(ctx context.Context, arg []CreateImagesParams) (int64, error)
 	CreatePost(ctx context.Context, arg CreatePostParams) (*Post, error)
 	CreatePostLike(ctx context.Context, arg CreatePostLikeParams) (*PostLike, error)
 	CreateProfile(ctx context.Context, arg CreateProfileParams) (*Profile, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (*User, error)
-	DeleteComment(ctx context.Context, commentUid uuid.UUID) error
-	DeletePostByPostUid(ctx context.Context, postUid uuid.UUID) error
-	DeleteUser(ctx context.Context, id int32) error
+	DeleteComment(ctx context.Context, commentID int64) error
+	DeletePostByPostID(ctx context.Context, postID int64) error
+	DeleteUser(ctx context.Context, id int64) error
 	DropCommentLike(ctx context.Context, arg DropCommentLikeParams) error
 	DropFollow(ctx context.Context, arg DropFollowParams) error
 	DropPostLike(ctx context.Context, arg DropPostLikeParams) error
-	GetAuthProfile(ctx context.Context, myUserID int32) (*GetAuthProfileRow, error)
-	GetImagesByPostIds(ctx context.Context, postIds []int32) ([]*GetImagesByPostIdsRow, error)
-	GetPaginatedCommentsByPostUID(ctx context.Context, arg GetPaginatedCommentsByPostUIDParams) ([]*GetPaginatedCommentsByPostUIDRow, error)
-	GetPaginatedFolloweesByUserUID(ctx context.Context, arg GetPaginatedFolloweesByUserUIDParams) ([]int32, error)
-	GetPaginatedFollowersByUserUID(ctx context.Context, arg GetPaginatedFollowersByUserUIDParams) ([]int32, error)
-	GetPaginatedPostsByUserUid(ctx context.Context, arg GetPaginatedPostsByUserUidParams) ([]*GetPaginatedPostsByUserUidRow, error)
+	GetAuthProfile(ctx context.Context, myUserID int64) (*GetAuthProfileRow, error)
+	GetFeedPosts(ctx context.Context, arg GetFeedPostsParams) ([]*GetFeedPostsRow, error)
+	GetFolloweeIds(ctx context.Context, arg GetFolloweeIdsParams) ([]int64, error)
+	GetImagesByPostIds(ctx context.Context, postIds []int64) ([]*GetImagesByPostIdsRow, error)
+	GetPaginatedCommentsByPostID(ctx context.Context, arg GetPaginatedCommentsByPostIDParams) ([]*GetPaginatedCommentsByPostIDRow, error)
 	GetPaginatedPostsByUsername(ctx context.Context, arg GetPaginatedPostsByUsernameParams) ([]*GetPaginatedPostsByUsernameRow, error)
-	GetPostByPostUID(ctx context.Context, arg GetPostByPostUIDParams) (*GetPostByPostUIDRow, error)
+	GetPostByPostID(ctx context.Context, arg GetPostByPostIDParams) (*GetPostByPostIDRow, error)
 	GetProfileByUsernameOrID(ctx context.Context, arg GetProfileByUsernameOrIDParams) (*GetProfileByUsernameOrIDRow, error)
 	GetUserByEmail(ctx context.Context, email string) (*GetUserByEmailRow, error)
 	SearchPaginatedFollowees(ctx context.Context, arg SearchPaginatedFolloweesParams) ([]*SearchPaginatedFolloweesRow, error)

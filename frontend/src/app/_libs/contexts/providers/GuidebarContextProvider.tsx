@@ -1,7 +1,7 @@
 "use client";
 
 import { PropsWithChildren, createContext, useContext, useState } from "react";
-import { GuideTypes } from "../../../_components/nav/guide";
+import { GuideTypes } from "../../vars/types";
 import { useScrollContext } from "./ScrollContextProvider";
 
 type GuidebarContextType = {
@@ -25,7 +25,7 @@ export default function GuidebarContextProvider({
 }: PropsWithChildren) {
   const { setShowScroll } = useScrollContext();
   const [guideLayout, setGuideLayout] = useState<GuideTypes | null>(
-    GuideTypes.Regular
+    GuideTypes.Regular,
   ); // 0: mini guide; 1: regular guide
   const [showOverlayGuide, setShowOverlayGuide] = useState(false);
 

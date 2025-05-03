@@ -1,11 +1,8 @@
-import Providers from "@/app/_libs/contexts";
+import Providers from "@/app/_libs/contexts/Providers";
 import Dropdown from "@/app/_libs/contexts/providers/DropdownContextProvider";
-import {
-    RenderResult,
-    fireEvent,
-    render
-} from "@testing-library/react";
-import { DropdownContent, DropdownTrigger } from ".";
+import { RenderResult, fireEvent, render } from "@testing-library/react";
+import DropdownContent from "./DropdownContent";
+import DropdownTrigger from "./DropdownTrigger";
 
 const TRIGGER_TEXT = "Open";
 const CONTENT_TEXT = "Content";
@@ -41,11 +38,11 @@ describe("Given basic dropdown", () => {
     beforeEach(() => {
       fireEvent.click(trigger);
       content = rendered.queryByText(CONTENT_TEXT);
-    })
+    });
 
-    it ('should diplay content', () => {
+    it("should diplay content", () => {
       expect(content).toBeVisible();
       expect(content).toHaveTextContent(CONTENT_TEXT);
-    })
+    });
   });
 });

@@ -1,0 +1,4 @@
+DROP FUNCTION IF EXISTS next_id;
+
+DROP SEQUENCE IF EXISTS table_id_seq;
+

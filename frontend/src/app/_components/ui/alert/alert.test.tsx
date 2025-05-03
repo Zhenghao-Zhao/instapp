@@ -1,7 +1,8 @@
-import DeleteAlert from "@/app/_components/ui/alert/alerts";
 import Alert from "@/app/_libs/contexts/providers/AlertContextProvider";
 import { RenderResult, fireEvent, render } from "@testing-library/react";
-import { AlertContent, AlertTrigger } from ".";
+import AlertContent from "./AlertContent";
+import AlertTrigger from "./AlertTrigger";
+import DeleteAlert from "./DeleteAlert";
 
 const OPEN_TEXT = "Open";
 
@@ -27,20 +28,20 @@ describe("Given button that triggers alert", () => {
   beforeEach(() => {
     rendered = render(<BasicAlert />);
     trigger = rendered.getByText(OPEN_TEXT);
-  })
+  });
   describe("after trigger is clicked", () => {
     beforeEach(() => {
       fireEvent.click(trigger);
-      title = rendered.getByText('Delete Post');
-      confirmBtn = rendered.getByText('Delete');
-    })
+      title = rendered.getByText("Delete Post");
+      confirmBtn = rendered.getByText("Delete");
+    });
     it("shows the right content", () => {
       expect(title).toBeVisible();
       expect(confirmBtn).toBeVisible();
-    })
+    });
     it("removes content when confirm is clicked", () => {
       fireEvent.click(confirmBtn);
       expect(title).not.toBeInTheDocument();
-    })
-  })
-})
+    });
+  });
+});

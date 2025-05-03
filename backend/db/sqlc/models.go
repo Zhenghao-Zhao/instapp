@@ -10,68 +10,63 @@ import (
 )
 
 type Comment struct {
-	ID        int32              `json:"id"`
-	Uid       uuid.UUID          `json:"uid"`
+	ID        int64              `json:"id"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 	Content   string             `json:"content"`
-	UserID    int32              `json:"user_id"`
-	PostID    int32              `json:"post_id"`
+	UserID    int64              `json:"user_id"`
+	PostID    int64              `json:"post_id"`
 }
 
 type CommentLike struct {
-	ID        int32 `json:"id"`
-	CommentID int32 `json:"comment_id"`
-	UserID    int32 `json:"user_id"`
+	ID        int64 `json:"id"`
+	CommentID int64 `json:"comment_id"`
+	UserID    int64 `json:"user_id"`
 }
 
 type Follower struct {
-	ID         int32              `json:"id"`
-	CreatedAt  pgtype.Timestamptz `json:"created_at"`
-	FollowerID int32              `json:"follower_id"`
-	FolloweeID int32              `json:"followee_id"`
+	ID         int64 `json:"id"`
+	FollowerID int64 `json:"follower_id"`
+	FolloweeID int64 `json:"followee_id"`
 }
 
 type Post struct {
-	ID        int32              `json:"id"`
-	Uid       uuid.UUID          `json:"uid"`
+	ID        int64              `json:"id"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 	Content   *string            `json:"content"`
-	UserID    int32              `json:"user_id"`
+	UserID    int64              `json:"user_id"`
 }
 
 type PostImage struct {
-	ID        int32              `json:"id"`
+	ID        int64              `json:"id"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 	Uid       uuid.UUID          `json:"uid"`
-	PostID    int32              `json:"post_id"`
+	PostID    int64              `json:"post_id"`
 }
 
 type PostLike struct {
-	ID     int32 `json:"id"`
-	PostID int32 `json:"post_id"`
-	UserID int32 `json:"user_id"`
+	ID     int64 `json:"id"`
+	PostID int64 `json:"post_id"`
+	UserID int64 `json:"user_id"`
 }
 
 type Profile struct {
-	ID           int32              `json:"id"`
+	ID           int64              `json:"id"`
 	CreatedAt    pgtype.Timestamptz `json:"created_at"`
 	Name         string             `json:"name"`
-	UserID       int32              `json:"user_id"`
+	UserID       int64              `json:"user_id"`
 	ProfileImage uuid.UUID          `json:"profile_image"`
 }
 
 type User struct {
-	ID        int32              `json:"id"`
+	ID        int64              `json:"id"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
-	Uid       uuid.UUID          `json:"uid"`
 	Email     string             `json:"email"`
 	Password  string             `json:"password"`
 	Username  string             `json:"username"`
 }
 
 type UserProfileSearch struct {
-	UserID       int32       `json:"user_id"`
-	UserUid      uuid.UUID   `json:"user_uid"`
+	UserID       int64       `json:"user_id"`
 	Username     string      `json:"username"`
 	Name         *string     `json:"name"`
 	ProfileImage uuid.UUID   `json:"profile_image"`

@@ -1,10 +1,12 @@
-import useUploadProfileImage from "@/app/_api/hooks/useUploadProfileImage";
-import { ACCEPTED_UPLOAD_FILE_TYPE } from "@/app/_components/posts/createPost/utils";
-import Throbber, { ThrobberSize } from "@/app/_components/ui/loaders";
+import Throbber, { ThrobberSize } from "@/app/_components/ui/loaders/Throbber";
 import { useDataContext } from "@/app/_libs/contexts/providers/ServerContextProvider";
+import useUploadProfileImage from "@/app/_libs/hooks/api/mutations/useUploadProfileImage";
+import {
+  ACCEPTED_UPLOAD_FILE_TYPE,
+  STATIC_PATHS,
+} from "@/app/_libs/vars/constants";
 import { FormEvent, useRef } from "react";
 import ProfileImage from "./ProfileImage";
-import { STATIC_PATHS } from "@/app/_libs/constants";
 
 // TODO: add ui notifying user when their profile image is being updated. Current throbber choice can be hard to see depending on image background.
 export default function ProfileChanger({ twSize }: { twSize?: string }) {
@@ -55,25 +57,3 @@ export default function ProfileChanger({ twSize }: { twSize?: string }) {
     </form>
   );
 }
-
-// function ProfileImagePlaceholder({
-//   imageURL,
-//   twSize,
-// }: {
-//   imageURL: string | null;
-//   twSize?: string;
-// }) {
-//   const { pending } = useFormStatus();
-//   return (
-//     <div className="relative w-fit">
-//       <label htmlFor="profileUpload">
-//         <ProfileImage imageURL={imageURL} className={twSize} />
-//       </label>
-//       {pending && (
-//         <div className="absolute w-full h-full flex items-center justify-center top-0">
-//           <Throbber size={ThrobberSize.MEDIUM} />
-//         </div>
-//       )}
-//     </div>
-//   );
-// }
