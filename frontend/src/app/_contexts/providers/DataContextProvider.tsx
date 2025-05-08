@@ -1,6 +1,6 @@
 "use client";
 import { PropsWithChildren, createContext, useContext, useState } from "react";
-import { AuthProfile } from "../../vars/types";
+import { AuthProfile } from "../../_libs/vars/types";
 
 type DataContextType = {
   authProfile: AuthProfile;

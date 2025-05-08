@@ -61,10 +61,8 @@ const getFriendsSearchResult = async (
   followship: string,
   query: string,
 ) => {
-  const url =
-    query.length > 0
-      ? `/${followship}/${userId}/search?cursor=${pageParam}&query=${query}`
-      : `/${followship}/${userId}/search?cursor=${pageParam}`;
-  const result = await clientApi.get(url);
+  const result = await clientApi.get(
+    `/${followship}/${userId}/search?cursor=${pageParam}${query && "&query=" + query}`,
+  );
   return UserPageSchema.parse(result.data.data);
 };

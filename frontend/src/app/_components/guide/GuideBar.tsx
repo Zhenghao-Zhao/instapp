@@ -1,6 +1,6 @@
 import Divider from "@/app/_components/ui/divider/Divider";
-import { useGuidebarContext } from "@/app/_libs/contexts/providers/GuidebarContextProvider";
-import { useDataContext } from "@/app/_libs/contexts/providers/ServerContextProvider";
+import { useDataContext } from "@/app/_contexts/providers/DataContextProvider";
+import { useGuidebarContext } from "@/app/_contexts/providers/GuidebarContextProvider";
 import { GuideTypes } from "@/app/_libs/vars/types";
 import { twMerge } from "tailwind-merge";
 import GuideSection from "./GuideSection";
@@ -18,7 +18,7 @@ export default function GuideBar({ className }: Props) {
   return (
     <section
       className={twMerge(
-        `hidden scrollbar-hidden flex-col items-center w-guide-normal fixed top-14 bottom-0 overflow-y-scroll text-sm bg-background-primary ${
+        `hidden scrollbar-hidden flex-col items-center w-guide-normal-width fixed top-14 bottom-0 overflow-y-scroll text-sm bg-background-primary ${
           guideLayout === GuideTypes.Regular ? "lgGb:flex" : "lgGb:hidden"
         }`,
         className,

@@ -1,4 +1,4 @@
-import Alert from "@/app/_libs/contexts/providers/AlertContextProvider";
+import Alert from "@/app/_contexts/providers/AlertContextProvider";
 import { RenderResult, fireEvent, render } from "@testing-library/react";
 import AlertContent from "./AlertContent";
 import AlertTrigger from "./AlertTrigger";

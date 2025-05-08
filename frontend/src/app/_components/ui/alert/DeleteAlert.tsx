@@ -1,4 +1,4 @@
-import { useAlertContext } from "@/app/_libs/contexts/providers/AlertContextProvider";
+import { useAlertContext } from "@/app/_contexts/providers/AlertContextProvider";
 
 export default function DeleteAlert({ onConfirm }: { onConfirm?: () => void }) {
   const { setOpen: setShow } = useAlertContext();

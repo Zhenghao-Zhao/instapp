@@ -1,5 +1,5 @@
 import { IconType } from "@/app/_components/ui/icon/Icons";
-import Modal from "@/app/_libs/contexts/providers/ModalContextProivder";
+import Modal from "@/app/_contexts/providers/ModalContextProivder";
 import { Suspense, lazy } from "react";
 import DiscardAlert from "../ui/alert/DiscardAlert";
 import IconButton from "../ui/buttons/IconButton";

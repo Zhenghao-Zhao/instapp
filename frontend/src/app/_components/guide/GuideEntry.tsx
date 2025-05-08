@@ -1,4 +1,4 @@
-import { useDataContext } from "@/app/_libs/contexts/providers/ServerContextProvider";
+import { useDataContext } from "@/app/_contexts/providers/DataContextProvider";
 import { usePathname } from "next/navigation";
 import IconLink from "../ui/buttons/IconLink";
 

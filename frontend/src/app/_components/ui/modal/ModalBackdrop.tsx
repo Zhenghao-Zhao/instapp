@@ -1,4 +1,4 @@
-import { useScrollContext } from "@/app/_libs/contexts/providers/ScrollContextProvider";
+import { useScrollContext } from "@/app/_contexts/providers/ScrollContextProvider";
 
 type BackdropProps = {
   show: boolean;

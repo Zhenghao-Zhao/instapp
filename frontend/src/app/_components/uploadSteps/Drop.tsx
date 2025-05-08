@@ -1,4 +1,4 @@
-import { useModalContext } from "@/app/_libs/contexts/providers/ModalContextProivder";
+import { useModalContext } from "@/app/_contexts/providers/ModalContextProivder";
 import { loadImage } from "@/app/_libs/utils";
 import {
   ACCEPTED_UPLOAD_FILE_TYPE,
@@ -6,6 +6,7 @@ import {
 } from "@/app/_libs/vars/constants";
 import { ImageInfo } from "@/app/_libs/vars/types";
 import React, { FormEvent, useEffect, useRef, useState } from "react";
+import { icons, IconType } from "../ui/icon/Icons";
 
 const hasCorrectFileType = (type: string) => {
   return ACCEPTED_UPLOAD_FILE_TYPE.split(",").includes(type);

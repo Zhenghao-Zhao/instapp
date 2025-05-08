@@ -6,7 +6,7 @@ import {
 } from "@tanstack/react-query";
 import { PropsWithChildren } from "react";
 import { toast } from "react-toastify";
-import { fromError } from "../utils";
+import { fromError } from "../_libs/utils";
 import GuidebarContextProvider from "./providers/GuidebarContextProvider";
 import ScrollContextProvider from "./providers/ScrollContextProvider";
 

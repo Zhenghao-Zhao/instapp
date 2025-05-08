@@ -3,9 +3,9 @@
 import InfiniteScrollLoader from "@/app/_components/common/InfiniteScrollLoader";
 import useFetchFeedPosts from "@/app/_libs/hooks/api/queries/useFetchFeedPosts";
 import { Post } from "@/app/_libs/vars/types";
-import { FeedCard } from "../_components/FeedCard";
+import { FeedCard } from "./_components/FeedCard";
 
-export default function Feed() {
+export default function Content() {
   const { posts, hasNextPage, isFetching, fetchNextPage } = useFetchFeedPosts();
 
   return (

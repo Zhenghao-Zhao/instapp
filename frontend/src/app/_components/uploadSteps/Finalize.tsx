@@ -21,7 +21,6 @@ export default function Finalize({
   changeCurrentImageIndex: (i: number) => void;
 }) {
   const [caption, setCaption] = useState("");
-
   const { mutate, isPending, isSuccess } = useCreatePost();
 
   const blobURLs = useMemo(() => {
@@ -81,7 +80,7 @@ export default function Finalize({
           />
         </CarouselWrapper>
         <textarea
-          className="bg-modal-primary w-upload-caption outline-none h-full p-2 border-t"
+          className="bg-modal-primary w-upload-menu-width outline-none h-full p-2 border-t"
           onChange={handleTextChange}
           value={caption}
           placeholder="Write a caption..."

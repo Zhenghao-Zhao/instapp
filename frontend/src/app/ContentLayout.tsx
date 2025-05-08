@@ -10,8 +10,8 @@ import { usePathname } from "next/navigation";
 import { PropsWithChildren, useLayoutEffect, useRef } from "react";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useGuidebarContext } from "./_libs/contexts/providers/GuidebarContextProvider";
-import { useScrollContext } from "./_libs/contexts/providers/ScrollContextProvider";
+import { useGuidebarContext } from "./_contexts/providers/GuidebarContextProvider";
+import { useScrollContext } from "./_contexts/providers/ScrollContextProvider";
 
 export default function ContentLayout({ children }: PropsWithChildren) {
   const { showScroll } = useScrollContext();
@@ -47,10 +47,10 @@ export default function ContentLayout({ children }: PropsWithChildren) {
         <GuideBar />
         <OverlayGuide />
         <section
-          className={`mt-6 smGb:max-lgGb:ml-guide-small ${
+          className={`mt-6 smGb:max-lgGb:ml-guide-small-width ${
             guideLayout === GuideTypes.Regular
-              ? "lgGb:ml-guide-normal"
-              : "lgGb:ml-guide-small"
+              ? "lgGb:ml-guide-normal-width"
+              : "lgGb:ml-guide-small-width"
           } px-6`}
         >
           <div className="min-h-main-minHeight flex flex-col">

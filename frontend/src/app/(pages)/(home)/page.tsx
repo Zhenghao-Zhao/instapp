@@ -6,19 +6,19 @@ import {
   QueryClient,
 } from "@tanstack/react-query";
 import { cookies } from "next/headers";
-import Feed from "./_content/Feed";
+import Content from "./Content";
 
 export default async function Home() {
   const queryClient = new QueryClient();
   await queryClient.prefetchInfiniteQuery({
-    queryKey: ["posts", "infinite", "feed"],
+    queryKey: ["posts", "feed"],
     queryFn: ({ pageParam }) => getFeedPosts(pageParam),
     staleTime: 60 * 1000,
     initialPageParam: "0",
   });
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <Feed />
+      <Content />
     </HydrationBoundary>
   );
 }

@@ -1,21 +1,21 @@
 "use client";
 import PostView from "@/app/_components/post/PostView";
-import { ModalWrapper } from "@/app/_components/ui/modal";
-import Modal from "@/app/_libs/contexts/providers/ModalContextProivder";
-import { Post } from "@/app/_libs/types/zod";
+import ModalContent from "@/app/_components/ui/modal/ModalContent";
+import Modal from "@/app/_contexts/providers/ModalContextProivder";
+import { Post } from "@/app/_libs/vars/types";
 import { useQueries, useQueryClient } from "@tanstack/react-query";
 
 export default function Page({
-  params: { post_uid },
+  params: { postId },
 }: {
-  params: { post_uid: string };
+  params: { postId: string };
 }) {
   const queryClient = useQueryClient();
   const cache = queryClient.getQueryCache();
   const queryKeys = cache
     .getAll()
     .map((c) => c.queryKey)
-    .filter((key) => key[0] === "posts" && key[1] === "infinite");
+    .filter((key) => key[0] === "posts");
 
   const results = useQueries({
     queries: queryKeys.map((key) => ({
@@ -28,12 +28,12 @@ export default function Page({
       }),
   });
 
-  const post = findPost(post_uid, results);
+  const post = findPost(postId, results);
   return (
     <Modal isRouted>
-      <ModalWrapper>
+      <ModalContent>
         <PostView post={post} />
-      </ModalWrapper>
+      </ModalContent>
     </Modal>
   );
 }

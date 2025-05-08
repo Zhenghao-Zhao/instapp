@@ -1,7 +1,7 @@
 import { Media } from "@/app/_libs/vars/constants";
 import Link from "next/link";
 import { useEffect } from "react";
-import { useGuidebarContext } from "../../_libs/contexts/providers/GuidebarContextProvider";
+import { useGuidebarContext } from "../../_contexts/providers/GuidebarContextProvider";
 import IconButton from "../ui/buttons/IconButton";
 import Icon from "../ui/icon/Icon";
 import { IconType } from "../ui/icon/Icons";
@@ -30,7 +30,7 @@ export default function OverlayGuide() {
           !showOverlayGuide && "-translate-x-full"
         } transition-all bg-background-primary`}
       >
-        <div className="flex space-x-6 items-center shrink-0 h-nav-height w-guide-normal px-4">
+        <div className="flex space-x-6 items-center shrink-0 h-nav-height w-guide-normal-width px-4">
           <IconButton
             icon={IconType.Menu}
             onClick={() => setOverlayGuide(false)}

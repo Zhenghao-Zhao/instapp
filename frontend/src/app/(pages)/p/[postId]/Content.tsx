@@ -6,7 +6,7 @@ import { SpacedCarousel } from "@/app/_components/ui/carousel/SpaceCarousel";
 import Separator from "@/app/_components/ui/divider/Separator";
 import useGetPost from "@/app/_libs/hooks/api/queries/useGetPost";
 import { useIsServer } from "@/app/_libs/hooks/useIsServer";
-import { formatDate } from "@/app/_libs/utils";
+import { formatDate, getAbsoluteURL } from "@/app/_libs/utils";
 import Link from "next/link";
 
 export default function Content({ postId }: { postId: string }) {
@@ -20,13 +20,13 @@ export default function Content({ postId }: { postId: string }) {
       <section className="w-full flex items-center px-carousel-arrow-width">
         <div className="flex flex-col gap-2 justify-center pb-4 px-4">
           <div className="flex items-center gap-4">
-            <Link href={post.owner.username}>
+            <Link href={getAbsoluteURL(post.owner.username)}>
               <ProfileImage
                 imageURL={post.owner.profileImageUrl}
                 className="size-12"
               />
             </Link>
-            <Link href={post.owner.username}>
+            <Link href={getAbsoluteURL(post.owner.username)}>
               <p className="whitespace-nowrap text-ellipsis">
                 {post.owner.name}
               </p>

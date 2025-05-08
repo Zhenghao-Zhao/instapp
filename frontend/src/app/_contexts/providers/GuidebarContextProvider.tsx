@@ -1,7 +1,7 @@
 "use client";
 
 import { PropsWithChildren, createContext, useContext, useState } from "react";
-import { GuideTypes } from "../../vars/types";
+import { GuideTypes } from "../../_libs/vars/types";
 import { useScrollContext } from "./ScrollContextProvider";
 
 type GuidebarContextType = {

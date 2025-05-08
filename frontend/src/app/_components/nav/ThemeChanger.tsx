@@ -1,5 +1,5 @@
-import Dropdown from "@/app/_libs/contexts/providers/DropdownContextProvider";
-import { useEffect, useState } from "react";
+import Dropdown from "@/app/_contexts/providers/DropdownContextProvider";
+import { useThemeContext } from "@/app/_contexts/providers/ThemeContextProvider";
 import IconButton from "../ui/buttons/IconButton";
 import DropdownContent from "../ui/dropdown/DropdownContent";
 import DropdownTrigger from "../ui/dropdown/DropdownTrigger";
@@ -8,7 +8,7 @@ import { IconType } from "../ui/icon/Icons";
 type ThemeIcon = IconType.Light | IconType.Dark | IconType.System;
 
 export default function ThemeChanger() {
-  const [activeTheme, setActiveTheme] = useState<IconType>(IconType.System);
+  const { theme, changeTheme } = useThemeContext();
 
   function ThemeEntry({
     label,
@@ -22,23 +22,22 @@ export default function ThemeChanger() {
         title={label}
         icon={themeIcon}
         className={`hover:bg-btn-hover-primary justify-start rounded-lg px-2 py-1 ${
-          themeIcon === activeTheme && "bg-btn-hover-primary"
+          themeIcon === theme && "bg-btn-hover-primary"
         }`}
         iconClassName="mr-2"
-        onClick={() => switchTheme(themeIcon, setActiveTheme)}
+        onClick={() => changeTheme(themeIcon)}
       />
     );
   }
 
-  useEffect(() => {
-    const theme = localStorage.getItem("theme") as ThemeIcon;
-    switchTheme(theme ?? "system", setActiveTheme);
-  }, []);
-
   return (
     <Dropdown>
       <DropdownTrigger>
-        <IconButton icon={activeTheme} tip="Change theme" className="p-2" />
+        <IconButton
+          icon={theme as IconType}
+          tip="Change theme"
+          className="p-2"
+        />
       </DropdownTrigger>
       <DropdownContent>
         <div className="rounded-lg p-2 flex flex-col space-y-1">
@@ -49,10 +48,4 @@ export default function ThemeChanger() {
       </DropdownContent>
     </Dropdown>
   );
-}
-
-function switchTheme(theme: ThemeIcon, set: (t: ThemeIcon) => void) {
-  document.documentElement.setAttribute("data-theme", theme);
-  set(theme);
-  localStorage.setItem("theme", theme);
 }

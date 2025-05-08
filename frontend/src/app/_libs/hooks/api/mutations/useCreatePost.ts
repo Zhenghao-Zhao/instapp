@@ -1,4 +1,4 @@
-import { useModalContext } from "@/app/_libs/contexts/providers/ModalContextProivder";
+import { useModalContext } from "@/app/_contexts/providers/ModalContextProivder";
 import { fromError } from "@/app/_libs/utils";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";

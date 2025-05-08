@@ -1,6 +1,6 @@
 import Icon from "@/app/_components/ui/icon/Icon";
 import { IconType } from "@/app/_components/ui/icon/Icons";
-import Alert from "@/app/_libs/contexts/providers/AlertContextProvider";
+import Alert from "@/app/_contexts/providers/AlertContextProvider";
 import AlertContent from "../ui/alert/AlertContent";
 import AlertTrigger from "../ui/alert/AlertTrigger";
 import DiscardAlert from "../ui/alert/DiscardAlert";

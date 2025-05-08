@@ -1,7 +1,7 @@
 import { Media } from "@/app/_libs/vars/constants";
 import Link from "next/link";
 import { useState } from "react";
-import { useGuidebarContext } from "../../_libs/contexts/providers/GuidebarContextProvider";
+import { useGuidebarContext } from "../../_contexts/providers/GuidebarContextProvider";
 import IconButton from "../ui/buttons/IconButton";
 import Icon from "../ui/icon/Icon";
 import { IconType } from "../ui/icon/Icons";

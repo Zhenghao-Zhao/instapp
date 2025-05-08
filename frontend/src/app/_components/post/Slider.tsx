@@ -2,18 +2,18 @@ import Dragbar from "./DragBar";
 
 export default function Slider({
   title,
-  scale,
-  changeScale,
-  maxScale,
-  minScale,
-  neutral,
+  currentValue,
+  changeValue,
+  maxValue,
+  minValue,
+  neutralValue,
 }: {
   title: string;
-  scale: number;
-  changeScale: (scale: number) => void;
-  maxScale: number;
-  minScale: number;
-  neutral: number;
+  currentValue: number;
+  changeValue: (scale: number) => void;
+  maxValue: number;
+  minValue: number;
+  neutralValue: number;
 }) {
   return (
     <div className="w-full h-fit shrink-0 group">
@@ -21,32 +21,33 @@ export default function Slider({
         <p className="text-xl">{title}</p>
         <button
           className="opacity-0 group-hover:opacity-100 transition-all ease-out"
-          onClick={() => changeScale(neutral)}
+          onClick={() => changeValue(neutralValue)}
         >
           Reset
         </button>
       </div>
       <div className="flex w-full h-fit items-center">
         <Dragbar
-          scale={scale}
-          changeScale={changeScale}
-          maxScale={maxScale}
-          minScale={minScale}
+          currentValue={currentValue}
+          changeValue={changeValue}
+          maxValue={maxValue}
+          minValue={minValue}
         />
-        <p className="w-6 mx-2 text-center">
-          {Math.round(normalize(minScale, maxScale, 0, 100, scale))}
+        <p className="w-[40px] text-right">
+          {Math.round(normalize(minValue, maxValue, 0, 100, currentValue))}
         </p>
       </div>
     </div>
   );
 }
 
+// convert between scales, e.g. 0.5 between 0, 1 to 50 between 0, 100
 function normalize(
-  atMin: number,
-  atMax: number,
+  fromMin: number,
+  fromMax: number,
   toMin: number,
   toMax: number,
   val: number,
 ) {
-  return (val / (atMax - atMin)) * (toMax - toMin) + toMin;
+  return (val / (fromMax - fromMin)) * (toMax - toMin) + toMin;
 }

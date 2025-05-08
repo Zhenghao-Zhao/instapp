@@ -1,5 +1,5 @@
-import Alert from "@/app/_libs/contexts/providers/AlertContextProvider";
-import { useModalContext } from "@/app/_libs/contexts/providers/ModalContextProivder";
+import Alert from "@/app/_contexts/providers/AlertContextProvider";
+import { useModalContext } from "@/app/_contexts/providers/ModalContextProivder";
 import React, { PropsWithChildren } from "react";
 import { createPortal } from "react-dom";
 import AlertContent from "../alert/AlertContent";

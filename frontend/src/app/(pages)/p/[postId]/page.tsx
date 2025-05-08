@@ -8,7 +8,7 @@ import {
 } from "@tanstack/react-query";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
-import Content from "./_content";
+import Content from "./Content";
 
 export default async function Page({
   params: { postId },
@@ -34,7 +34,7 @@ export default async function Page({
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <Content postId={postId} />;
+      <Content postId={postId} />
     </HydrationBoundary>
   );
 }

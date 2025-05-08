@@ -13,20 +13,22 @@ nextjs-portal {
   --nav-height: 56px;
   --main-min-height: calc(100vh - var(--nav-height));
   --footer-height: 80px;
-  --guide-normal: 15rem;
-  --guide-small: 72px;
+  --guide-normal-width: 15rem;
+  --guide-small-width: 72px;
   --backdrop: rgba(0, 0, 0, 0.7);
   --tooltip: rgba(0, 0, 0, 1);
   --scrollthumb: hsl(0, 0%, 67%);
   --scrollthumb-light: hsl(0, 0%, 77%);
   --scrollWidth: 15px;
-  --upload-caption-width: 20rem;
+  --upload-menu-width: 320px;
   --upload-image-width: calc(min(100vw - 200px, 600px));
   --upload-header-height: 45px;
   --upload-height: calc(
     var(--upload-header-height) + var(--upload-image-width)
   );
-  --upload-width: calc(var(--upload-image-width) + var(--upload-caption-width));
+  --upload-window-width: calc(
+    var(--upload-image-width) + var(--upload-menu-width)
+  );
   --view-arrow-width: 100px;
   --view-width: calc(
     min(1500px, calc(100vw - calc(var(--view-arrow-width) * 2)))
@@ -61,7 +63,10 @@ nextjs-portal {
   --scroll-view-width: calc(max(min(100vw - 200px, 730px), 200px));
   --carousel-arrow-width: 50px;
   --carousel-image-size: calc(
-    min(500px, 100vw - var(--guide-small) - var(--carousel-arrow-width) * 2)
+    min(
+      500px,
+      100vw - var(--guide-small-width) - var(--carousel-arrow-width) * 2
+    )
   );
   --carousel-image-gap: 20px;
   --carousel-scroll-padding: 80px;

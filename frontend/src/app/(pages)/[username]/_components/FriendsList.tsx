@@ -3,11 +3,11 @@ import ProfileImage from "@/app/(pages)/[username]/_components/ProfileImage";
 import InfiniteScrollLoader from "@/app/_components/common/InfiniteScrollLoader";
 import ListLoader from "@/app/_components/ui/loaders/ListLoader";
 import { ThrobberSize } from "@/app/_components/ui/loaders/Throbber";
-import { useDataContext } from "@/app/_libs/contexts/providers/ServerContextProvider";
+import SearchBox from "@/app/_components/ui/SearchBox";
+import { useDataContext } from "@/app/_contexts/providers/DataContextProvider";
 import useSearchFriends from "@/app/_libs/hooks/api/queries/useSearchFriends";
 import Link from "next/link";
 import { useState } from "react";
-import SearchBox from "../../../_components/ui/searchBox";
 
 export default function FriendList({
   userId,

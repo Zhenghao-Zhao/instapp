@@ -1,4 +1,4 @@
-import { useDropdownContext } from "@/app/_libs/contexts/providers/DropdownContextProvider";
+import { useDropdownContext } from "@/app/_contexts/providers/DropdownContextProvider";
 import { PropsWithChildren } from "react";
 
 export default function DropdownTrigger({ children }: PropsWithChildren) {

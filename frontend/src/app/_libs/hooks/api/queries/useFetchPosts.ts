@@ -7,7 +7,7 @@ import { clientApi } from "../axios";
 
 export default function useFetchPosts(username: string) {
   const query = useInfiniteQuery({
-    queryKey: ["posts", "infinite", "home", username],
+    queryKey: ["posts", "home", username],
     queryFn: ({ pageParam }) => getUserPosts(pageParam, username),
     initialPageParam: "0",
     getNextPageParam: (lastPage, _pages) => lastPage.nextCursor,

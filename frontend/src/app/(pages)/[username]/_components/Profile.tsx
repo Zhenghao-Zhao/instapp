@@ -1,8 +1,8 @@
 "use client";
 import ModalContent from "@/app/_components/ui/modal/ModalContent";
 import ModalTrigger from "@/app/_components/ui/modal/ModalTrigger";
-import Modal from "@/app/_libs/contexts/providers/ModalContextProivder";
-import { useDataContext } from "@/app/_libs/contexts/providers/ServerContextProvider";
+import { useDataContext } from "@/app/_contexts/providers/DataContextProvider";
+import Modal from "@/app/_contexts/providers/ModalContextProivder";
 import useFetchProfile from "@/app/_libs/hooks/api/mutations/useFetchProfile";
 import FollowButton from "./FollowButton";
 import FriendList from "./FriendsList";
@@ -30,9 +30,10 @@ export default function Profile({ username }: { username: string }) {
           />
         )}
       </div>
-      <p className="text-2xl font-bold area-name justify-self-start">
-        {profile.username}
-      </p>
+      <div className="area-name justify-self-start">
+        <p className="text-2xl font-bold">{profile.username}</p>
+        <p className="mt-2">{profile.name}</p>
+      </div>
       {!isOwner && (
         <FollowButton
           isFollowing={profile.isFollowing}

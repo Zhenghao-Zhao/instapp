@@ -1,6 +1,6 @@
 import ProfileImage from "@/app/(pages)/[username]/_components/ProfileImage";
-import Dropdown from "@/app/_libs/contexts/providers/DropdownContextProvider";
-import { useDataContext } from "@/app/_libs/contexts/providers/ServerContextProvider";
+import { useDataContext } from "@/app/_contexts/providers/DataContextProvider";
+import Dropdown from "@/app/_contexts/providers/DropdownContextProvider";
 import { useLogout } from "@/app/_libs/hooks/api/mutations/authentication";
 import { FormEvent, useRef } from "react";
 import SubmitButton from "../ui/buttons/SubmitButton";

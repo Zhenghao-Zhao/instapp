@@ -1,6 +1,6 @@
 "use client";
 import ProfileImage from "@/app/(pages)/[username]/_components/ProfileImage";
-import Alert from "@/app/_libs/contexts/providers/AlertContextProvider";
+import Alert from "@/app/_contexts/providers/AlertContextProvider";
 import useDeletePost from "@/app/_libs/hooks/api/mutations/useDeletePost";
 import { formatDate, getAbsoluteURL } from "@/app/_libs/utils";
 import { Post } from "@/app/_libs/vars/types";

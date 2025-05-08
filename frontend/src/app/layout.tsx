@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { PropsWithChildren, Suspense } from "react";
 import Loading from "./(templates)/loading";
 import AuthDataWrapper from "./_components/auth/AuthDataWrapper";
-import Providers from "./_libs/contexts/Providers";
+import Providers from "./_contexts/Providers";
+import ThemeContextProvider, {
+  Theme,
+} from "./_contexts/providers/ThemeContextProvider";
 import ContentLayout from "./ContentLayout";
 import "./globals.css";
 
@@ -17,21 +21,25 @@ export default async function RootLayout({
 }: PropsWithChildren<{
   modal: React.ReactNode;
 }>) {
+  const theme = cookies().get("theme")?.value;
   return (
     <html
       lang="en"
       className="font-roboto h-full bg-background-primary text-text-primary overscroll-y-none"
+      data-theme={theme ?? "system"}
     >
       <body className="relative w-full h-full overscroll-none">
         <Providers>
-          <Suspense fallback={<Loading />}>
-            <AuthDataWrapper>
-              <ContentLayout>
-                {modal}
-                {children}
-              </ContentLayout>
-            </AuthDataWrapper>
-          </Suspense>
+          <ThemeContextProvider prevTheme={theme ? (theme as Theme) : "system"}>
+            <Suspense fallback={<Loading />}>
+              <AuthDataWrapper>
+                <ContentLayout>
+                  {modal}
+                  {children}
+                </ContentLayout>
+              </AuthDataWrapper>
+            </Suspense>
+          </ThemeContextProvider>
         </Providers>
       </body>
     </html>

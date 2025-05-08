@@ -1,8 +1,8 @@
 import { DiscardAlert } from "@/app/_components/ui/alert/templates";
+import Modal from "@/app/_contexts/providers/ModalContextProivder";
 import Providers from "@/app/_libs/contexts";
-import Modal from "@/app/_libs/contexts/providers/ModalContextProivder";
 import { RenderResult, fireEvent, render } from "@testing-library/react";
-import { ModalWrapper, ModalTrigger } from ".";
+import { ModalTrigger, ModalWrapper } from ".";
 
 const OPEN_TEXT = "Open";
 const CONTENT_TEXT = "Content";

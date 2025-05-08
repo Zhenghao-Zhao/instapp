@@ -34,7 +34,7 @@ export default async function Page({
   }
 
   await queryClient.prefetchInfiniteQuery({
-    queryKey: ["posts", "infinite", "home", username],
+    queryKey: ["posts", "home", username],
     queryFn: ({ pageParam }) => getUserPosts(pageParam, username),
     staleTime: 60 * 1000,
     initialPageParam: "0",

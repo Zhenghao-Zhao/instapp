@@ -1,5 +1,5 @@
 import { twMerge } from "tailwind-merge";
-import { IconType } from "./Icons";
+import { icons, IconType } from "./Icons";
 
 export default function Icon({
   icon,

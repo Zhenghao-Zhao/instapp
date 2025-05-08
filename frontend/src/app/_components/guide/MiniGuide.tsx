@@ -1,7 +1,7 @@
-import { useDataContext } from "@/app/_libs/contexts/providers/ServerContextProvider";
-import { useMemo } from "react";
-import { useGuidebarContext } from "../../_libs/contexts/providers/GuidebarContextProvider";
+import { useDataContext } from "@/app/_contexts/providers/DataContextProvider";
 import { GuideTypes } from "@/app/_libs/vars/types";
+import { useMemo } from "react";
+import { useGuidebarContext } from "../../_contexts/providers/GuidebarContextProvider";
 import { MiniGuideEntry } from "./MiniGuideEntry";
 
 export default function MiniGuide() {
@@ -18,7 +18,7 @@ export default function MiniGuide() {
       className={`smGb:max-lgGb:flex max-smGb:hidden ${
         guideLayout === GuideTypes.Mini ? "lgGb:flex" : "lgGb:hidden"
       } 
-    flex-col items-center w-guide-small fixed top-14 bottom-0 text-[10px] px-1`}
+    flex-col items-center w-guide-small-width fixed top-14 bottom-0 text-[10px] px-1`}
     >
       {miniGuideData.map((data, i: number) => (
         <MiniGuideEntry

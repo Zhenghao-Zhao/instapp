@@ -119,12 +119,12 @@ export default function AdjustableImage({
         <div className="absolute bottom-2 left-2">
           <div className="bg-black px-4 h-fit rounded-xl bg-opacity-40 w-28">
             <Dragbar
-              scale={scale}
-              changeScale={changeScale}
+              currentValue={scale}
+              changeValue={changeScale}
               onKnobRelease={() => recenterImage()}
               style={{ knobColor: "white", railColor: "black" }}
-              minScale={1}
-              maxScale={2}
+              minValue={1}
+              maxValue={2}
             />
           </div>
         </div>

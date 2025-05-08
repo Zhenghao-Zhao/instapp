@@ -1,5 +1,5 @@
-import Providers from "@/app/_libs/contexts/Providers";
-import Dropdown from "@/app/_libs/contexts/providers/DropdownContextProvider";
+import Providers from "@/app/_contexts/Providers";
+import Dropdown from "@/app/_contexts/providers/DropdownContextProvider";
 import { RenderResult, fireEvent, render } from "@testing-library/react";
 import DropdownContent from "./DropdownContent";
 import DropdownTrigger from "./DropdownTrigger";

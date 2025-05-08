@@ -7,7 +7,7 @@ import { clientApi } from "../axios";
 export default function useFetchFeedPosts() {
   const { data, error, fetchNextPage, hasNextPage, isFetching } =
     useInfiniteQuery({
-      queryKey: ["posts", "infinite", "feed"],
+      queryKey: ["posts", "feed"],
       queryFn: ({ pageParam }) => getFeedPosts(pageParam),
       initialPageParam: "0",
       getNextPageParam: (lastPage, _pages) => lastPage.nextCursor,

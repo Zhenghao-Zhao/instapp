@@ -1,6 +1,6 @@
 "use client";
 
-import { useDropdownContext } from "@/app/_libs/contexts/providers/DropdownContextProvider";
+import { useDropdownContext } from "@/app/_contexts/providers/DropdownContextProvider";
 import { getOverlayPosition } from "@/app/_libs/utils";
 import { DropdownPosition } from "@/app/_libs/vars/types";
 import { PropsWithChildren, useEffect, useLayoutEffect, useState } from "react";

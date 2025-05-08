@@ -1,5 +1,5 @@
 import InternalError from "@/app/(templates)/internalError";
-import DataContextProvider from "@/app/_libs/contexts/providers/ServerContextProvider";
+import DataContextProvider from "@/app/_contexts/providers/DataContextProvider";
 import { serverApi } from "@/app/_libs/hooks/api/axios";
 import { fromError } from "@/app/_libs/utils";
 import { HttpStatusCodes } from "@/app/_libs/vars/constants";

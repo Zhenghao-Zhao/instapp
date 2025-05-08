@@ -11,19 +11,19 @@ const defaultStyle: DragBarStyle = {
 };
 
 export default function Dragbar({
-  scale,
-  changeScale,
+  currentValue,
+  changeValue,
   onKnobRelease,
   style = defaultStyle,
-  minScale = 0,
-  maxScale = 1,
+  minValue = 0,
+  maxValue = 1,
 }: {
-  scale: number;
-  changeScale: (s: number) => void;
+  currentValue: number;
+  changeValue: (s: number) => void;
   onKnobRelease?: () => void;
   style?: DragBarStyle;
-  minScale?: number;
-  maxScale?: number;
+  minValue?: number;
+  maxValue?: number;
 }) {
   const railRef = useRef<HTMLDivElement>(null);
   const knobRef = useRef<HTMLDivElement>(null);
@@ -34,10 +34,10 @@ export default function Dragbar({
   useLayoutEffect(() => {
     if (!railRef.current || !knobRef.current) return;
     translateRef.current =
-      ((scale - minScale) / (maxScale - minScale)) *
+      ((currentValue - minValue) / (maxValue - minValue)) *
       (railRef.current.offsetWidth - knobRef.current.offsetWidth);
     knobRef.current.style.transform = `translate(${translateRef.current}px)`;
-  }, [scale, minScale, maxScale]);
+  }, [currentValue, minValue, maxValue]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -53,9 +53,9 @@ export default function Dragbar({
       Math.max(e.clientX - mouseStartX.current + prevRef.current, 0),
       railRef.current.offsetWidth - knobRef.current.offsetWidth,
     );
-    changeScale(
-      minScale +
-        ((maxScale - minScale) * translateRef.current) /
+    changeValue(
+      minValue +
+        ((maxValue - minValue) * translateRef.current) /
           (railRef.current.offsetWidth - knobRef.current.offsetWidth),
     );
   };

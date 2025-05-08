@@ -1,9 +1,9 @@
 "use client";
-import { InfiniteScrollLoader } from "@/app/_components/common";
+import InfiniteScrollLoader from "@/app/_components/common/InfiniteScrollLoader";
 import PostEntry from "@/app/_components/post/PostEntry";
-import useFetchExplorePosts from "@/app/_libs/hooks/infiniteQueries/useFetchExplorePosts";
-import { Post } from "@/app/_libs/types/zod";
+import useFetchExplorePosts from "@/app/_libs/hooks/api/queries/useFetchExplorePosts";
 import { getAbsoluteURL } from "@/app/_libs/utils";
+import { Post } from "@/app/_libs/vars/types";
 import Link from "next/link";
 import React from "react";
 
@@ -22,7 +22,7 @@ export default function Content({
         {posts.map((post: Post, j: number) => {
           return (
             <Link
-              href={getAbsoluteURL(`p/${post.postUid}`)}
+              href={getAbsoluteURL(`p/${post.postId}`)}
               key={j}
               scroll={false}
             >

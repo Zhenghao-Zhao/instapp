@@ -1,4 +1,4 @@
-import { useDataContext } from "@/app/_libs/contexts/providers/ServerContextProvider";
+import { useDataContext } from "@/app/_contexts/providers/DataContextProvider";
 import { FriendshipPayload, Profile } from "@/app/_libs/vars/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";

@@ -1,12 +1,11 @@
+import { Post } from "@/app/_libs/vars/types";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { getExplorePosts } from "../../api/queries";
-import { Post } from "../../types";
 
 export default function useFetchExplorePosts(initialData: any) {
   const { data, error, fetchNextPage, hasNextPage, isFetching } =
     useInfiniteQuery({
-      queryKey: ["posts", "infinite", "explore"],
+      queryKey: ["posts", "explore"],
       queryFn: ({ pageParam }) => getExplorePosts(pageParam),
       initialPageParam: 0,
       getNextPageParam: (lastPage, _pages) => lastPage.nextCursor,
@@ -27,4 +26,7 @@ export default function useFetchExplorePosts(initialData: any) {
     hasNextPage,
     fetchNextPage,
   };
+}
+function getExplorePosts(pageParam: number): any {
+  throw new Error("Function not implemented.");
 }

@@ -50,14 +50,13 @@ const config: Config = {
       },
       spacing: {
         "nav-height": "var(--nav-height)",
-        "guide-small": "var(--guide-small)",
-        "guide-normal": "var(--guide-normal)",
+        "guide-small-width": "var(--guide-small-width)",
+        "guide-normal-width": "var(--guide-normal-width)",
         "footer-height": "var(--footer-height)",
-        "upload-caption": "var(--upload-caption-width)",
+        "upload-menu-width": "var(--upload-menu-width)",
         "upload-height": "var(--upload-height)",
-        "upload-width": "var(--upload-width)",
+        "upload-window-width": "var(--upload-window-width)",
         "upload-image-width": "var(--upload-image-width)",
-        "upload-step": "30px",
         "upload-header-height": "var(--upload-header-height)",
         "view-width": "var(--view-width)",
         "view-arrow-width": "var(--view-arrow-width)",
@@ -81,7 +80,7 @@ const config: Config = {
         "carousel-scroll-padding": "var(--carousel-scroll-padding)",
       },
       minWidth: {
-        "upload-width": "320px",
+        "upload-window-width": "320px",
         "upload-minWidth": "var(--upload-image-width)",
       },
       maxWidth: {

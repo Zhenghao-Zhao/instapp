@@ -84,8 +84,8 @@ export default function CreatePost() {
     <div
       className={`flex ${
         (currentStep < UploadSteps.Edit && "w-upload-image-width") ||
-        (currentStep === UploadSteps.Edit && "w-upload-width") ||
-        (currentStep === UploadSteps.AddInfo && "w-upload-width") ||
+        (currentStep === UploadSteps.Edit && "w-upload-window-width") ||
+        (currentStep === UploadSteps.AddInfo && "w-upload-window-width") ||
         (currentStep === UploadSteps.Submit && "w-upload-image-width")
       } transition-all`}
     >

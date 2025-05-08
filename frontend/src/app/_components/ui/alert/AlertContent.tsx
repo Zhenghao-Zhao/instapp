@@ -1,5 +1,5 @@
 import { IconType } from "@/app/_components/ui/icon/Icons";
-import { useAlertContext } from "@/app/_libs/contexts/providers/AlertContextProvider";
+import { useAlertContext } from "@/app/_contexts/providers/AlertContextProvider";
 import { PropsWithChildren } from "react";
 import { createPortal } from "react-dom";
 import Icon from "../icon/Icon";

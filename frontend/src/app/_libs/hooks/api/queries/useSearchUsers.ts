@@ -41,7 +41,7 @@ export default function useSearchUsers(query: string, showResult: boolean) {
 
 const getUserSearchResult = async (pageParam: string, query: string) => {
   const result = await clientApi.get(
-    `search?cursor=${pageParam}&query=${query}`,
+    `search?cursor=${pageParam}${query && "&query=" + query}`,
   );
   return UserPageSchema.parse(result.data.data);
 };

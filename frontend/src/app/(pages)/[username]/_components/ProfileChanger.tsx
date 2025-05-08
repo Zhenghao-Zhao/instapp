@@ -1,5 +1,5 @@
 import Throbber, { ThrobberSize } from "@/app/_components/ui/loaders/Throbber";
-import { useDataContext } from "@/app/_libs/contexts/providers/ServerContextProvider";
+import { useDataContext } from "@/app/_contexts/providers/DataContextProvider";
 import useUploadProfileImage from "@/app/_libs/hooks/api/mutations/useUploadProfileImage";
 import {
   ACCEPTED_UPLOAD_FILE_TYPE,

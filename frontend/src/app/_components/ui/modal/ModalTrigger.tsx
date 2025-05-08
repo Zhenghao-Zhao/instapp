@@ -1,4 +1,4 @@
-import { useModalContext } from "@/app/_libs/contexts/providers/ModalContextProivder";
+import { useModalContext } from "@/app/_contexts/providers/ModalContextProivder";
 import { PropsWithChildren } from "react";
 
 export default function ModalTrigger({

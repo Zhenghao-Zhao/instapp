@@ -1,5 +1,6 @@
-import { useDataContext } from "@/app/_libs/contexts/providers/ServerContextProvider";
+import { useDataContext } from "@/app/_contexts/providers/DataContextProvider";
 import { fromError } from "@/app/_libs/utils";
+import { ProfileImageSchema } from "@/app/_libs/vars/schemas";
 import { Post } from "@/app/_libs/vars/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
