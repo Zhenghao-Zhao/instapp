@@ -1,4 +1,4 @@
-package controllers
+package api
 
 import (
 	"encoding/json"
@@ -7,8 +7,8 @@ import (
 	"strconv"
 
 	"github.com/google/uuid"
-	"github.com/zhenghao-zhao/instapp/app/api"
 	"github.com/zhenghao-zhao/instapp/app/auth"
+	cu "github.com/zhenghao-zhao/instapp/app/utils/controllerUtil"
 	db "github.com/zhenghao-zhao/instapp/db/sqlc"
 	"golang.org/x/sync/errgroup"
 )
@@ -22,14 +22,14 @@ func (s *Server) CreatePostHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		myUserID, err := auth.GetSessionUserId(r)
 		if err != nil {
-			api.JSONResponse(w, api.AuthErrorResp)
+			JSONResponse(w, AuthErrorResp)
 			return
 		}
 
 		err = r.ParseMultipartForm(10 << 20)
 		if err != nil {
 			log.Printf("Unable to parse multipart form: %v", err.Error())
-			api.JSONResponse(w, api.FileSizeExceeded)
+			JSONResponse(w, FileSizeExceeded)
 			return
 		}
 
@@ -77,7 +77,7 @@ func (s *Server) CreatePostHandler() http.HandlerFunc {
 		if err != nil {
 			// -- TODO: clean up extra images in the cloud
 			log.Printf("request to upload image to cloud failed: %v", err.Error())
-			api.JSONResponse(w, api.GenericErrorResp)
+			JSONResponse(w, GenericErrorResp)
 			return
 		}
 
@@ -89,7 +89,7 @@ func (s *Server) CreatePostHandler() http.HandlerFunc {
 		post, err := s.CreatePost(r.Context(), params)
 		if err != nil {
 			log.Printf("failed to create post: %v", err.Error())
-			api.JSONResponse(w, api.GenericErrorResp)
+			JSONResponse(w, GenericErrorResp)
 			return
 		}
 
@@ -105,31 +105,31 @@ func (s *Server) CreatePostHandler() http.HandlerFunc {
 		_, err = s.CreateImages(r.Context(), imageParams)
 		if err != nil {
 			log.Printf("failed to insert images into db: %v", err.Error())
-			api.JSONResponse(w, api.GenericErrorResp)
+			JSONResponse(w, GenericErrorResp)
 			return
 		}
 
-		api.OKResponse(w)
+		OKResponse(w)
 	}
 }
 
 func (s *Server) GetPaginatedPostsHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		cursor, err := GetCursorParam(r)
+		cursor, err := cu.GetCursorParam(r)
 		if err != nil {
 			log.Printf("failed to parse curosr value: %v", err.Error())
-			api.JSONResponse(w, api.InvalidQueryParamsResp)
+			JSONResponse(w, InvalidQueryParamsResp)
 			return
 		}
 		myUserID, err := auth.GetSessionUserId(r)
 		if err != nil {
-			api.JSONResponse(w, api.AuthErrorResp)
+			JSONResponse(w, AuthErrorResp)
 			return
 		}
-		username, err := GetRouteSegment(r, "username")
+		username, err := cu.GetRouteSegment(r, "username")
 		if err != nil {
 			log.Printf("failed to parse username: %v", err.Error())
-			api.JSONResponse(w, api.InvalidRouteResp)
+			JSONResponse(w, InvalidRouteResp)
 			return
 		}
 		getPostsParams := db.GetPaginatedPostsByUsernameParams{
@@ -142,7 +142,7 @@ func (s *Server) GetPaginatedPostsHandler() http.HandlerFunc {
 		postRows, err := s.GetPaginatedPostsByUsername(r.Context(), getPostsParams)
 		if err != nil {
 			log.Printf("failed to get posts:%v", err.Error())
-			api.JSONResponse(w, GenDBResponse(err))
+			JSONResponse(w, GenDBResponse(err))
 			return
 		}
 
@@ -156,7 +156,7 @@ func (s *Server) GetPaginatedPostsHandler() http.HandlerFunc {
 			err := json.Unmarshal(row.ImageUids, &imageUids)
 			if err != nil {
 				log.Printf("failed to unmarshal images: %v", err.Error())
-				api.JSONResponse(w, api.GenericErrorResp)
+				JSONResponse(w, GenericErrorResp)
 				return
 			}
 			owner := OwnerProfileDTO{
@@ -167,7 +167,7 @@ func (s *Server) GetPaginatedPostsHandler() http.HandlerFunc {
 				IsFollowing:     row.OwnerIsFollowing,
 			}
 			posts[i] = PostDTO{
-				CreatedAt:    ConvertTime(row.CreatedAt),
+				CreatedAt:    cu.ConvertTime(row.CreatedAt),
 				PostId:       strconv.FormatInt(row.PostID, 10),
 				Content:      *row.Content,
 				ImageUrls:    s.GetPostImageUrls(imageUids),
@@ -187,11 +187,11 @@ func (s *Server) GetPaginatedPostsHandler() http.HandlerFunc {
 			Data:       posts,
 			NextCursor: nextCursor,
 		}
-		resp := api.ApiResponse{
+		resp := ApiResponse{
 			Data: data,
 			Code: http.StatusOK,
 		}
-		api.JSONResponse(w, resp)
+		JSONResponse(w, resp)
 	}
 }
 
@@ -199,14 +199,14 @@ func (s *Server) GetPostHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		myUserId, err := auth.GetSessionUserId(r)
 		if err != nil {
-			api.JSONResponse(w, api.AuthErrorResp)
+			JSONResponse(w, AuthErrorResp)
 			return
 		}
 
-		postId, err := GetIdFromRoute(r, "postId")
+		postId, err := cu.GetIdFromRoute(r, "postId")
 		if err != nil {
 			log.Printf("failed to scan post id from route:%v", err.Error())
-			api.JSONResponse(w, api.GenericErrorResp)
+			JSONResponse(w, GenericErrorResp)
 			return
 		}
 
@@ -218,7 +218,7 @@ func (s *Server) GetPostHandler() http.HandlerFunc {
 		postRow, err := s.GetPostByPostID(r.Context(), postParams)
 		if err != nil {
 			log.Printf("failed to get posts:%v", err.Error())
-			api.JSONResponse(w, GenDBResponse(err))
+			JSONResponse(w, GenDBResponse(err))
 			return
 		}
 
@@ -226,12 +226,12 @@ func (s *Server) GetPostHandler() http.HandlerFunc {
 		err = json.Unmarshal(postRow.ImageUids, &imageUids)
 		if err != nil {
 			log.Printf("failed to unmashal image uids:%v", err.Error())
-			api.JSONResponse(w, api.GenericErrorResp)
+			JSONResponse(w, GenericErrorResp)
 			return
 		}
 		post := PostDTO{
 			PostId:       strconv.FormatInt(postRow.PostID, 10),
-			CreatedAt:    ConvertTime(postRow.CreatedAt),
+			CreatedAt:    cu.ConvertTime(postRow.CreatedAt),
 			Content:      *postRow.Content,
 			ImageUrls:    s.GetPostImageUrls(imageUids),
 			LikeCount:    postRow.LikeCount,
@@ -247,46 +247,46 @@ func (s *Server) GetPostHandler() http.HandlerFunc {
 			ProfileImageUrl: s.GetImageUrl(postRow.OwnerProfileImage.String()),
 			IsFollowing:     postRow.OwnerIsFollowing,
 		}
-		resp := api.ApiResponse{
+		resp := ApiResponse{
 			Data: post,
 			Code: http.StatusOK,
 		}
-		api.JSONResponse(w, resp)
+		JSONResponse(w, resp)
 	}
 }
 
 func (s *Server) DeletePostHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		postId, err := GetIdFromRoute(r, "postId")
+		postId, err := cu.GetIdFromRoute(r, "postId")
 		if err != nil {
 			log.Printf("failed to scan postUid from route: %v", err.Error())
-			api.JSONResponse(w, api.GenericErrorResp)
+			JSONResponse(w, GenericErrorResp)
 			return
 		}
 
 		err = s.DeletePostByPostID(r.Context(), postId)
 		if err != nil {
 			log.Printf("failed to delete post from db: %v", err.Error())
-			api.JSONResponse(w, api.GenericErrorResp)
+			JSONResponse(w, GenericErrorResp)
 			return
 		}
 
-		api.OKResponse(w)
+		OKResponse(w)
 	}
 }
 
 func (s *Server) FeedHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		cursor, err := GetCursorParam(r)
+		cursor, err := cu.GetCursorParam(r)
 		if err != nil {
 			log.Printf("failed to parse curosr value: %v", err.Error())
-			api.JSONResponse(w, api.InvalidQueryParamsResp)
+			JSONResponse(w, InvalidQueryParamsResp)
 			return
 		}
 
 		myUserID, err := auth.GetSessionUserId(r)
 		if err != nil {
-			api.JSONResponse(w, api.AuthErrorResp)
+			JSONResponse(w, AuthErrorResp)
 			return
 		}
 
@@ -298,7 +298,7 @@ func (s *Server) FeedHandler() http.HandlerFunc {
 		postRows, err := s.GetFeedPosts(r.Context(), params)
 		if err != nil {
 			log.Printf("failed to get feed posts from db: %v", err.Error())
-			api.JSONResponse(w, GenDBResponse(err))
+			JSONResponse(w, GenDBResponse(err))
 			return
 		}
 
@@ -312,7 +312,7 @@ func (s *Server) FeedHandler() http.HandlerFunc {
 			err := json.Unmarshal(row.ImageUids, &imageUids)
 			if err != nil {
 				log.Printf("failed to unmarshal images: %v", err.Error())
-				api.JSONResponse(w, api.GenericErrorResp)
+				JSONResponse(w, GenericErrorResp)
 				return
 			}
 			owner := OwnerProfileDTO{
@@ -323,7 +323,7 @@ func (s *Server) FeedHandler() http.HandlerFunc {
 				IsFollowing:     true,
 			}
 			posts[i] = PostDTO{
-				CreatedAt:    ConvertTime(row.CreatedAt),
+				CreatedAt:    cu.ConvertTime(row.CreatedAt),
 				PostId:       strconv.FormatInt(row.PostID, 10),
 				Content:      *row.Content,
 				ImageUrls:    s.GetPostImageUrls(imageUids),
@@ -345,10 +345,10 @@ func (s *Server) FeedHandler() http.HandlerFunc {
 			NextCursor: nextCursor,
 		}
 
-		resp := api.ApiResponse{
+		resp := ApiResponse{
 			Data: data,
 			Code: http.StatusOK,
 		}
-		api.JSONResponse(w, resp)
+		JSONResponse(w, resp)
 	}
 }

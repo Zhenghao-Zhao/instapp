@@ -1,4 +1,4 @@
-import { Media } from "@/app/_libs/vars/constants";
+import { GUIDE_BREAKPOINT } from "@/app/_libs/vars/constants";
 import Link from "next/link";
 import { useState } from "react";
 import { useGuidebarContext } from "../../_contexts/providers/GuidebarContextProvider";
@@ -13,7 +13,7 @@ export default function NavBar() {
   const { guideLayout, setGuideLayout, setOverlayGuide } = useGuidebarContext();
 
   const toggleGuide = (): void => {
-    if (window.innerWidth < Media.GUIDE_BREAKPOINT) {
+    if (window.innerWidth < GUIDE_BREAKPOINT) {
       setOverlayGuide(true);
     } else {
       setGuideLayout(1 - guideLayout!);

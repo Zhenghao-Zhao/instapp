@@ -1,11 +1,11 @@
-package controllers
+package api
 
 import (
 	"log"
 	"net/http"
 
-	"github.com/zhenghao-zhao/instapp/app/api"
 	"github.com/zhenghao-zhao/instapp/app/auth"
+	cu "github.com/zhenghao-zhao/instapp/app/utils/controllerUtil"
 	db "github.com/zhenghao-zhao/instapp/db/sqlc"
 )
 
@@ -13,14 +13,14 @@ func (s *Server) LikePostHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		myUserID, err := auth.GetSessionUserId(r)
 		if err != nil {
-			api.JSONResponse(w, api.AuthErrorResp)
+			JSONResponse(w, AuthErrorResp)
 			return
 		}
 
-		postId, err := GetIdFromRoute(r, "postId")
+		postId, err := cu.GetIdFromRoute(r, "postId")
 		if err != nil {
 			log.Printf("failed to scan postUid from route: %v", err.Error())
-			api.JSONResponse(w, api.GenericErrorResp)
+			JSONResponse(w, GenericErrorResp)
 			return
 		}
 		params := db.CreatePostLikeParams{
@@ -30,14 +30,14 @@ func (s *Server) LikePostHandler() http.HandlerFunc {
 		data, err := s.CreatePostLike(r.Context(), params)
 		if err != nil {
 			log.Printf("failed to like a post:%v", err.Error())
-			api.JSONResponse(w, api.GenericErrorResp)
+			JSONResponse(w, GenericErrorResp)
 			return
 		}
-		resp := api.ApiResponse{
+		resp := ApiResponse{
 			Data: data,
 			Code: http.StatusOK,
 		}
-		api.JSONResponse(w, resp)
+		JSONResponse(w, resp)
 	}
 }
 
@@ -45,14 +45,14 @@ func (s *Server) UnlikePostHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		myUserID, err := auth.GetSessionUserId(r)
 		if err != nil {
-			api.JSONResponse(w, api.AuthErrorResp)
+			JSONResponse(w, AuthErrorResp)
 			return
 		}
 
-		postId, err := GetIdFromRoute(r, "postId")
+		postId, err := cu.GetIdFromRoute(r, "postId")
 		if err != nil {
 			log.Printf("failed to scan postUid from route: %v", err.Error())
-			api.JSONResponse(w, api.GenericErrorResp)
+			JSONResponse(w, GenericErrorResp)
 			return
 		}
 		params := db.DropPostLikeParams{
@@ -62,9 +62,9 @@ func (s *Server) UnlikePostHandler() http.HandlerFunc {
 		err = s.DropPostLike(r.Context(), params)
 		if err != nil {
 			log.Printf("failed to like a post:%v", err.Error())
-			api.JSONResponse(w, api.GenericErrorResp)
+			JSONResponse(w, GenericErrorResp)
 			return
 		}
-		api.OKResponse(w)
+		OKResponse(w)
 	}
 }

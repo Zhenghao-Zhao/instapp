@@ -1,4 +1,4 @@
-package controllers
+package api
 
 import (
 	"context"
@@ -15,7 +15,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/zhenghao-zhao/instapp/app/auth"
-	"github.com/zhenghao-zhao/instapp/app/utils/image"
+	"github.com/zhenghao-zhao/instapp/app/utils/imageutil"
 	"github.com/zhenghao-zhao/instapp/config"
 	"github.com/zhenghao-zhao/instapp/db"
 	"github.com/zhenghao-zhao/instapp/db/sqlc"
@@ -26,14 +26,14 @@ type Server struct {
 	*config.Config
 	sqlc.Store
 	*Service
-	*image.ImageHandler
+	*imageutil.ImageHandler
 }
 
 func (s *Server) Run() {
 	gob.Register(uuid.UUID{})
 	config := config.LoadConfig(".")
 	s.Config = &config
-	s.ImageHandler = image.NewImageHandler(s.Config, 80)
+	s.ImageHandler = imageutil.NewImageHandler(s.Config, 80)
 
 	service := NewService(&http.Client{
 		Timeout: time.Second * 10,
@@ -61,7 +61,7 @@ func (s *Server) Run() {
 	defer sessionStore.Close()
 
 	db.AutoMigrate(config)
-	s.initRoutes()
+	s.InitRoutes()
 
 	// Configure CORS
 	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization"})

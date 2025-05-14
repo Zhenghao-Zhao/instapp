@@ -1,4 +1,4 @@
-package controllers
+package api
 
 import (
 	"encoding/json"
@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/zhenghao-zhao/instapp/app/api"
 	"github.com/zhenghao-zhao/instapp/app/auth"
+	cu "github.com/zhenghao-zhao/instapp/app/utils/controllerUtil"
 	db "github.com/zhenghao-zhao/instapp/db/sqlc"
 )
 
@@ -15,15 +15,15 @@ const FollowerPageLimit = 20
 
 func (s *Server) AddFollowHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		followeeId, err := GetIdFromRoute(r, "userId")
+		followeeId, err := cu.GetIdFromRoute(r, "userId")
 		if err != nil {
 			log.Printf("failed to scan postUID from route: %v", err.Error())
-			api.JSONResponse(w, api.GenericErrorResp)
+			JSONResponse(w, GenericErrorResp)
 			return
 		}
 		myUserId, err := auth.GetSessionUserId(r)
 		if err != nil {
-			api.JSONResponse(w, api.AuthErrorResp)
+			JSONResponse(w, AuthErrorResp)
 			return
 		}
 
@@ -35,11 +35,11 @@ func (s *Server) AddFollowHandler() http.HandlerFunc {
 		err = s.CreateFollower(r.Context(), params)
 		if err != nil {
 			log.Printf("failed to add follow :%v", err.Error())
-			api.JSONResponse(w, GenDBResponse(err))
+			JSONResponse(w, GenDBResponse(err))
 			return
 		}
 
-		api.JSONResponse(w, api.ApiResponse{
+		JSONResponse(w, ApiResponse{
 			Code: http.StatusCreated,
 		})
 	}
@@ -47,10 +47,10 @@ func (s *Server) AddFollowHandler() http.HandlerFunc {
 
 func (s *Server) RemoveFollowHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		followeeId, err := GetIdFromRoute(r, "userId")
+		followeeId, err := cu.GetIdFromRoute(r, "userId")
 		if err != nil {
 			log.Printf("failed to scan postUID from route: %v", err.Error())
-			api.JSONResponse(w, api.GenericErrorResp)
+			JSONResponse(w, GenericErrorResp)
 			return
 		}
 
@@ -63,32 +63,32 @@ func (s *Server) RemoveFollowHandler() http.HandlerFunc {
 			err := s.DropFollow(r.Context(), params)
 			if err != nil {
 				log.Printf("failed to remove follow :%v", err.Error())
-				api.JSONResponse(w, api.GenericErrorResp)
+				JSONResponse(w, GenericErrorResp)
 				return
 			}
 
-			api.OKResponse(w)
+			OKResponse(w)
 			return
 		}
 
-		api.JSONResponse(w, api.AuthErrorResp)
+		JSONResponse(w, AuthErrorResp)
 	}
 }
 
 func (s *Server) SearchFollowerHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		cursor, err := GetCursorParam(r)
+		cursor, err := cu.GetCursorParam(r)
 		if err != nil {
 			log.Printf("failed to parse curosr value: %v", err.Error())
-			api.JSONResponse(w, api.InvalidQueryParamsResp)
+			JSONResponse(w, InvalidQueryParamsResp)
 			return
 		}
-		userId, err := GetIdFromRoute(r, "userId")
+		userId, err := cu.GetIdFromRoute(r, "userId")
 		if err != nil {
-			api.JSONResponse(w, api.InvalidRouteResp)
+			JSONResponse(w, InvalidRouteResp)
 			return
 		}
-		query := GetQueryParam(r, "query")
+		query := cu.GetQueryParam(r, "query")
 		params := db.SearchPaginatedFollowersParams{
 			FolloweeID:   userId,
 			SearchQuery:  &query,
@@ -98,7 +98,7 @@ func (s *Server) SearchFollowerHandler() http.HandlerFunc {
 		userRows, err := s.SearchPaginatedFollowers(r.Context(), params)
 		if err != nil {
 			log.Printf("failed to search paginated followers: %v", err.Error())
-			api.JSONResponse(w, GenDBResponse(err))
+			JSONResponse(w, GenDBResponse(err))
 			return
 		}
 
@@ -120,7 +120,7 @@ func (s *Server) SearchFollowerHandler() http.HandlerFunc {
 			followId := strconv.FormatInt(userRows[listLength-1].FollowID, 10)
 			nextCursor = &followId
 		}
-		api.JSONResponse(w, api.ApiResponse{
+		JSONResponse(w, ApiResponse{
 			Data: NewPageDTO[UserProfileDTO]{
 				Data:       users,
 				NextCursor: nextCursor,
@@ -132,18 +132,18 @@ func (s *Server) SearchFollowerHandler() http.HandlerFunc {
 
 func (s *Server) SearchFolloweeHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		cursor, err := GetCursorParam(r)
+		cursor, err := cu.GetCursorParam(r)
 		if err != nil {
 			log.Printf("failed to parse curosr value: %v", err.Error())
-			api.JSONResponse(w, api.InvalidQueryParamsResp)
+			JSONResponse(w, InvalidQueryParamsResp)
 			return
 		}
-		userId, err := GetIdFromRoute(r, "userId")
+		userId, err := cu.GetIdFromRoute(r, "userId")
 		if err != nil {
-			api.JSONResponse(w, api.InvalidRouteResp)
+			JSONResponse(w, InvalidRouteResp)
 			return
 		}
-		query := GetQueryParam(r, "query")
+		query := cu.GetQueryParam(r, "query")
 		params := db.SearchPaginatedFolloweesParams{
 			FollowerID:   userId,
 			SearchQuery:  &query,
@@ -153,7 +153,7 @@ func (s *Server) SearchFolloweeHandler() http.HandlerFunc {
 		userRows, err := s.SearchPaginatedFollowees(r.Context(), params)
 		if err != nil {
 			log.Printf("failed to search paginated followees: %v", err.Error())
-			api.JSONResponse(w, GenDBResponse(err))
+			JSONResponse(w, GenDBResponse(err))
 			return
 		}
 
@@ -175,7 +175,7 @@ func (s *Server) SearchFolloweeHandler() http.HandlerFunc {
 			followId := strconv.FormatInt(userRows[listLength-1].FollowID, 10)
 			nextCursor = &followId
 		}
-		api.JSONResponse(w, api.ApiResponse{
+		JSONResponse(w, ApiResponse{
 			Data: NewPageDTO[UserProfileDTO]{
 				Data:       users,
 				NextCursor: nextCursor,
@@ -195,31 +195,31 @@ func (s *Server) GetFriendshipsHandler() http.HandlerFunc {
 		err := json.NewDecoder(r.Body).Decode(&payload)
 		if err != nil {
 			log.Printf("failed to parse payload: %v", err.Error())
-			api.JSONResponse(w, api.InvalidRequestPayloadResp)
+			JSONResponse(w, InvalidRequestPayloadResp)
 			return
 		}
 
 		result := make(map[int64]RelationDTO)
 
 		if len(payload.UserIds) == 0 {
-			api.JSONResponse(w, api.ApiResponse{
+			JSONResponse(w, ApiResponse{
 				Data: result,
 				Code: http.StatusOK,
 			})
 			return
 		}
 
-		ids, err := ConvertIds(payload.UserIds)
+		ids, err := cu.ConvertIds(payload.UserIds)
 		if err != nil {
 			log.Printf("failed to convert string id to int64")
-			api.JSONResponse(w, api.GenericErrorResp)
+			JSONResponse(w, GenericErrorResp)
 			return
 		}
 
 		myUserId, err := auth.GetSessionUserId(r)
 		if err != nil {
 			log.Printf("failed to obtain user id: %v", err.Error())
-			api.JSONResponse(w, api.AuthErrorResp)
+			JSONResponse(w, AuthErrorResp)
 			return
 		}
 		params := db.GetFolloweeIdsParams{
@@ -230,7 +230,7 @@ func (s *Server) GetFriendshipsHandler() http.HandlerFunc {
 		followeeIds, err := s.GetFolloweeIds(r.Context(), params)
 		if err != nil {
 			log.Printf("failed to get followee ids: %v", err.Error())
-			api.JSONResponse(w, GenDBResponse(err))
+			JSONResponse(w, GenDBResponse(err))
 			return
 		}
 
@@ -246,7 +246,7 @@ func (s *Server) GetFriendshipsHandler() http.HandlerFunc {
 			result[id] = dto
 		}
 
-		api.JSONResponse(w, api.ApiResponse{
+		JSONResponse(w, ApiResponse{
 			Data: result,
 			Code: http.StatusOK,
 		})

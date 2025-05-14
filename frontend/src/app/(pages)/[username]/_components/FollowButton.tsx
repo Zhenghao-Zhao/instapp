@@ -22,7 +22,7 @@ export default function FollowButton({
   };
   return (
     <button
-      className={twMerge("bg-blue-500 p-2 rounded-md", className)}
+      className={twMerge("bg-blue-500 p-2 rounded-md text-white", className)}
       onClick={handleClick}
       disabled={isPending}
       {...props}

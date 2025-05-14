@@ -2,7 +2,6 @@ import InternalError from "@/app/(templates)/internalError";
 import DataContextProvider from "@/app/_contexts/providers/DataContextProvider";
 import { serverApi } from "@/app/_libs/hooks/api/axios";
 import { fromError } from "@/app/_libs/utils";
-import { HttpStatusCodes } from "@/app/_libs/vars/constants";
 import { AuthProfileSchema } from "@/app/_libs/vars/schemas";
 import { cookies } from "next/headers";
 import { PropsWithChildren } from "react";
@@ -18,7 +17,7 @@ export default async function AuthDataWrapper({ children }: PropsWithChildren) {
     );
   } catch (error) {
     const apiError = fromError(error);
-    if (apiError.status == HttpStatusCodes.UNAUTHORIZED) {
+    if (apiError.status == 401) {
       return <AuthPage />;
     } else {
       return <InternalError />;

@@ -1,11 +1,12 @@
 import useWorker from "@/app/_libs/hooks/worker/useWorker";
-import { Image } from "@/app/_libs/vars/constants";
 import { FilterParams, ImageInfo, Transform } from "@/app/_libs/vars/types";
 import { useCallback, useMemo, useState } from "react";
 import CanvasImage from "../post/CanvasImage";
 import { EditPalette } from "../post/EditPalette";
 import UploadHeader from "../post/UploadHeader";
 import CarouselWrapper from "../ui/carousel/CarouselWrapper";
+
+const UPLOAD_IMAGE_SIZE = 1080;
 
 export default function Edit({
   imageInfoList,
@@ -79,10 +80,10 @@ export default function Edit({
         sHeight,
         dx: 0,
         dy: 0,
-        dWidth: Image.UPLOAD_IMAGE_SIZE,
-        dHeight: Image.UPLOAD_IMAGE_SIZE,
-        cWidth: Image.UPLOAD_IMAGE_SIZE,
-        cHeight: Image.UPLOAD_IMAGE_SIZE,
+        dWidth: UPLOAD_IMAGE_SIZE,
+        dHeight: UPLOAD_IMAGE_SIZE,
+        cWidth: UPLOAD_IMAGE_SIZE,
+        cHeight: UPLOAD_IMAGE_SIZE,
         displaySize: containerSize,
       };
     },

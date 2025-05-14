@@ -3,11 +3,11 @@ package main
 import (
 	"log"
 
-	"github.com/zhenghao-zhao/instapp/app/controllers"
+	"github.com/zhenghao-zhao/instapp/app/api"
 )
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile) // Adds filename:line
-	server := controllers.Server{}
+	server := api.Server{}
 	server.Run()
 }

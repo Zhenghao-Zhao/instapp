@@ -1,6 +1,6 @@
 import { isAxiosError } from "axios";
 import { RefObject } from "react";
-import { Dropdown, UNEXPECTED_ERROR_MESSAGE } from "../vars/constants";
+import { DropdownParams, UNEXPECTED_ERROR_MESSAGE } from "../vars/constants";
 import { ApiError, DropdownPosition } from "../vars/types";
 
 export function delay(t: number = 3000) {
@@ -80,11 +80,14 @@ const calPosition = (
       nodePosition.left - overlay.offsetWidth / 2,
       document.documentElement.offsetWidth -
         overlay.offsetWidth -
-        Dropdown.BOX_SHADOW_WIDTH,
+        DropdownParams.BOX_SHADOW_WIDTH,
     ),
   );
 
-  return { left: tooltipLeft, top: nodePosition.top + Dropdown.TOP_MARGIN };
+  return {
+    left: tooltipLeft,
+    top: nodePosition.top + DropdownParams.TOP_MARGIN,
+  };
 };
 
 export function getOverlayPosition(

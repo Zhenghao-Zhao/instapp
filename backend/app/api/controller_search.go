@@ -1,11 +1,11 @@
-package controllers
+package api
 
 import (
 	"log"
 	"net/http"
 	"strconv"
 
-	"github.com/zhenghao-zhao/instapp/app/api"
+	cu "github.com/zhenghao-zhao/instapp/app/utils/controllerUtil"
 	db "github.com/zhenghao-zhao/instapp/db/sqlc"
 )
 
@@ -13,8 +13,8 @@ const UserSearchLimit = 10
 
 func (s *Server) SearchHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		cursor := GetQueryParam(r, "cursor")
-		query := GetQueryParam(r, "query")
+		cursor := cu.GetQueryParam(r, "cursor")
+		query := cu.GetQueryParam(r, "query")
 
 		params := db.SearchPaginatedUsersParams{
 			SearchQuery:  &query,
@@ -25,7 +25,7 @@ func (s *Server) SearchHandler() http.HandlerFunc {
 		userRows, err := s.SearchPaginatedUsers(r.Context(), params)
 		if err != nil {
 			log.Printf("failed to search users in db: %v", err.Error())
-			api.JSONResponse(w, GenDBResponse(err))
+			JSONResponse(w, GenDBResponse(err))
 			return
 		}
 
@@ -46,7 +46,7 @@ func (s *Server) SearchHandler() http.HandlerFunc {
 		if len(userRows) == FollowerPageLimit+1 {
 			nextCursor = &userRows[listLength-1].Username
 		}
-		api.JSONResponse(w, api.ApiResponse{
+		JSONResponse(w, ApiResponse{
 			Data: NewPageDTO[UserProfileDTO]{
 				Data:       users,
 				NextCursor: nextCursor,

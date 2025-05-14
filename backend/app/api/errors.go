@@ -1,4 +1,4 @@
-package controllers
+package api
 
 import (
 	"errors"
@@ -8,24 +8,23 @@ import (
 
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/zhenghao-zhao/instapp/app/api"
 )
 
-func GenDBResponse(err error) api.ApiResponse {
+func GenDBResponse(err error) ApiResponse {
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) {
 		switch pgErr.Code {
 		case pgerrcode.UniqueViolation:
 			colName := extractColumnName(pgErr.ConstraintName)
 			errMessage := fmt.Sprintf("The %v already exists", colName)
-			return api.ApiResponse{Message: errMessage, Code: http.StatusBadRequest}
+			return ApiResponse{Message: errMessage, Code: http.StatusBadRequest}
 		case pgerrcode.NotNullViolation:
 			colName := extractColumnName(pgErr.ConstraintName)
 			errMessage := fmt.Sprintf("The %v is required", colName)
-			return api.ApiResponse{Message: errMessage, Code: http.StatusBadRequest}
+			return ApiResponse{Message: errMessage, Code: http.StatusBadRequest}
 		}
 	}
-	return api.GenericErrorResp
+	return GenericErrorResp
 }
 
 func extractColumnName(constraint string) string {

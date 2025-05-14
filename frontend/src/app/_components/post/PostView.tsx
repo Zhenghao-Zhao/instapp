@@ -61,7 +61,7 @@ export default function PostView({ post }: { post?: Post }) {
                   ) : (
                     <Alert>
                       <AlertTrigger className="ml-auto">
-                        <button className="p-2 bg-red-500 rounded-md text-sm">
+                        <button className="p-2 bg-red-500 text-white rounded-md text-sm">
                           Delete
                         </button>
                       </AlertTrigger>

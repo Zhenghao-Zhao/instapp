@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { initTransformValues } from "@/app/_libs/vars/constants";
 import {
   FilterParams,
   ImageInfo,
-  initFilterValues,
   Transform,
   UploadSteps,
 } from "@/app/_libs/vars/types";
@@ -12,6 +10,20 @@ import Crop from "../uploadSteps/Crop";
 import Drop from "../uploadSteps/Drop";
 import Edit from "../uploadSteps/Edit";
 import Finalize from "../uploadSteps/Finalize";
+
+const initTransformValues: Transform = {
+  translateX: 0,
+  translateY: 0,
+  scale: 1,
+};
+
+const initFilterValues = {
+  brightness: 1, // 0 - 2, 1 neutral
+  contrast: 1, // 0 - 2, 1 neutral
+  saturation: 1, // 0 - 2, 0 unsaturated, 1 unchanged
+  sepia: 0, // 0 - 1, 1 completely sepia, 0 no change
+  grayscale: 0, // 0 - 1, 1 completely grayscaled, 0 no change
+};
 
 export default function CreatePost() {
   const [currentStep, setCurrentStep] = useState(0);

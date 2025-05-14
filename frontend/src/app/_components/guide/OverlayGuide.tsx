@@ -1,4 +1,4 @@
-import { Media } from "@/app/_libs/vars/constants";
+import { GUIDE_BREAKPOINT } from "@/app/_libs/vars/constants";
 import Link from "next/link";
 import { useEffect } from "react";
 import { useGuidebarContext } from "../../_contexts/providers/GuidebarContextProvider";
@@ -11,7 +11,7 @@ import GuideBar from "./GuideBar";
 export default function OverlayGuide() {
   const { showOverlayGuide, setOverlayGuide } = useGuidebarContext();
   useEffect(() => {
-    const media = window.matchMedia(`(min-width:${Media.GUIDE_BREAKPOINT}px)`);
+    const media = window.matchMedia(`(min-width:${GUIDE_BREAKPOINT}px)`);
     function handler(e: MediaQueryListEvent) {
       if (e.matches) {
         setOverlayGuide(false);

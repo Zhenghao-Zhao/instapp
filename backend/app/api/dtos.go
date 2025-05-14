@@ -1,4 +1,4 @@
-package controllers
+package api
 
 type PageDTO[T any] struct {
 	Data       []T  `json:"data"`

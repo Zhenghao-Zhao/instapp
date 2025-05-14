@@ -52,20 +52,3 @@ export default function UniversalSearch({ className }: Props) {
     </ClickDetector>
   );
 }
-
-interface SearchInputProps extends InputHTMLAttributes<HTMLInputElement> {
-  setQuery: (q: string) => void;
-}
-
-export function SearchInput({ setQuery, ...props }: SearchInputProps) {
-  const [draft, setDraft] = useState("");
-  // if user clears input reset query to empty string immediately
-  useDebounce(() => setQuery(draft), draft, draft.length > 0 ? 500 : 0);
-  return (
-    <input
-      {...props}
-      onChange={(e) => setDraft(e.target.value)}
-      value={draft}
-    />
-  );
-}

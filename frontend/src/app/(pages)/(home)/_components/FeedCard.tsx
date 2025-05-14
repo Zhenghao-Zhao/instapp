@@ -5,6 +5,7 @@ import { formatDate } from "@/app/_libs/utils";
 import { Post } from "@/app/_libs/vars/types";
 import ProfileImage from "../../[username]/_components/ProfileImage";
 import { MiniPostOptions } from "./MiniPostOptions";
+
 export function FeedCard({ post }: { post: Post }) {
   return (
     <div className="flex flex-col justify-center">

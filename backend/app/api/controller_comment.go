@@ -1,4 +1,4 @@
-package controllers
+package api
 
 import (
 	"encoding/json"
@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/zhenghao-zhao/instapp/app/api"
 	"github.com/zhenghao-zhao/instapp/app/auth"
+	cu "github.com/zhenghao-zhao/instapp/app/utils/controllerUtil"
 	db "github.com/zhenghao-zhao/instapp/db/sqlc"
 )
 
@@ -17,23 +17,23 @@ const CommentPageLimit = 10
 func (s *Server) GetCommentsHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Getting post comments")
-		postId, err := GetIdFromRoute(r, "postId")
+		postId, err := cu.GetIdFromRoute(r, "postId")
 		if err != nil {
 			log.Printf("failed to scan postUID from route: %v", err.Error())
-			api.JSONResponse(w, api.GenericErrorResp)
+			JSONResponse(w, GenericErrorResp)
 			return
 		}
 
-		pageNum, err := strconv.Atoi(GetQueryParam(r, "page"))
+		pageNum, err := strconv.Atoi(cu.GetQueryParam(r, "page"))
 		if err != nil {
 			log.Printf("failed to parse query param page:%v", err.Error())
-			api.JSONResponse(w, api.InvalidQueryParamsResp)
+			JSONResponse(w, InvalidQueryParamsResp)
 			return
 		}
 
 		myUserId, err := auth.GetSessionUserId(r)
 		if err != nil {
-			api.JSONResponse(w, api.GenericErrorResp)
+			JSONResponse(w, GenericErrorResp)
 			return
 		}
 
@@ -47,7 +47,7 @@ func (s *Server) GetCommentsHandler() http.HandlerFunc {
 		data, err := s.GetPaginatedCommentsByPostID(r.Context(), params)
 		if err != nil {
 			log.Printf("failed to get paginated comments:%v", err.Error())
-			api.JSONResponse(w, api.GenericErrorResp)
+			JSONResponse(w, GenericErrorResp)
 			return
 		}
 
@@ -62,7 +62,7 @@ func (s *Server) GetCommentsHandler() http.HandlerFunc {
 				ProfileImageUrl: s.GetImageUrl(row.OwnerProfileImage.String()),
 			}
 			comments[i] = CommentDTO{
-				CreatedAt: ConvertTime(row.CreatedAt),
+				CreatedAt: cu.ConvertTime(row.CreatedAt),
 				CommentId: strconv.FormatInt(row.CommentID, 10),
 				Content:   row.Content,
 				LikeCount: row.LikesCount,
@@ -76,23 +76,23 @@ func (s *Server) GetCommentsHandler() http.HandlerFunc {
 			nextPage := pageNum + 1
 			nextCursor = &nextPage
 		}
-		resp := api.ApiResponse{
+		resp := ApiResponse{
 			Data: PageDTO[CommentDTO]{
 				Data:       comments,
 				NextCursor: nextCursor,
 			},
 			Code: http.StatusOK,
 		}
-		api.JSONResponse(w, resp)
+		JSONResponse(w, resp)
 	}
 }
 
 func (s *Server) LikeCommentHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		commentId, err := GetIdFromRoute(r, "commentId")
+		commentId, err := cu.GetIdFromRoute(r, "commentId")
 		if err != nil {
 			log.Printf("failed to scan postUID from route: %v", err.Error())
-			api.JSONResponse(w, api.GenericErrorResp)
+			JSONResponse(w, GenericErrorResp)
 			return
 		}
 
@@ -105,29 +105,29 @@ func (s *Server) LikeCommentHandler() http.HandlerFunc {
 			data, err := s.CreateCommentLike(r.Context(), params)
 			if err != nil {
 				log.Printf("failed to get like comments:%v", err.Error())
-				api.JSONResponse(w, api.GenericErrorResp)
+				JSONResponse(w, GenericErrorResp)
 				return
 			}
 
-			resp := api.ApiResponse{
+			resp := ApiResponse{
 				Data: data,
 				Code: http.StatusOK,
 			}
 
-			api.JSONResponse(w, resp)
+			JSONResponse(w, resp)
 			return
 		}
 
-		api.JSONResponse(w, api.AuthErrorResp)
+		JSONResponse(w, AuthErrorResp)
 	}
 }
 
 func (s *Server) UnlikeCommentHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		commentId, err := GetIdFromRoute(r, "commentId")
+		commentId, err := cu.GetIdFromRoute(r, "commentId")
 		if err != nil {
 			log.Printf("failed to scan commentUid from route: %v", err.Error())
-			api.JSONResponse(w, api.GenericErrorResp)
+			JSONResponse(w, GenericErrorResp)
 			return
 		}
 
@@ -140,15 +140,15 @@ func (s *Server) UnlikeCommentHandler() http.HandlerFunc {
 			err := s.DropCommentLike(r.Context(), params)
 			if err != nil {
 				log.Printf("failed to get like comments:%v", err.Error())
-				api.JSONResponse(w, api.GenericErrorResp)
+				JSONResponse(w, GenericErrorResp)
 				return
 			}
 
-			api.OKResponse(w)
+			OKResponse(w)
 			return
 		}
 
-		api.JSONResponse(w, api.AuthErrorResp)
+		JSONResponse(w, AuthErrorResp)
 	}
 }
 
@@ -162,19 +162,19 @@ func (s *Server) CreateCommentHandler() http.HandlerFunc {
 		err := json.NewDecoder(r.Body).Decode(&commentParams)
 		if err != nil {
 			log.Printf("failed to parse comment params from route: %v", err.Error())
-			api.JSONResponse(w, api.InvalidRequestPayloadResp)
+			JSONResponse(w, InvalidRequestPayloadResp)
 			return
 		}
 		userId, err := auth.GetSessionUserId(r)
 		if err != nil {
 			log.Printf("failed to convert uuid string to uuid: %v", err.Error())
-			api.JSONResponse(w, api.AuthErrorResp)
+			JSONResponse(w, AuthErrorResp)
 			return
 		}
-		postId, err := GetIdFromRoute(r, "postId")
+		postId, err := cu.GetIdFromRoute(r, "postId")
 		if err != nil {
 			log.Printf("failed to parse post id from route: %v", err.Error())
-			api.JSONResponse(w, api.GenericErrorResp)
+			JSONResponse(w, GenericErrorResp)
 		}
 		params := db.CreateCommentParams{
 			Content: commentParams.Content,
@@ -184,12 +184,12 @@ func (s *Server) CreateCommentHandler() http.HandlerFunc {
 		comment, err := s.CreateComment(r.Context(), params)
 		if err != nil {
 			log.Printf("failed to create comment in db: %v", err.Error())
-			api.JSONResponse(w, GenDBResponse(err))
+			JSONResponse(w, GenDBResponse(err))
 			return
 		}
 		userInfo, err := auth.GetUserSessionInfo(r)
 		if err != nil {
-			api.JSONResponse(w, api.GenericErrorResp)
+			JSONResponse(w, GenericErrorResp)
 			return
 		}
 		owner := UserProfileDTO{
@@ -199,7 +199,7 @@ func (s *Server) CreateCommentHandler() http.HandlerFunc {
 			ProfileImageUrl: userInfo.ProfileImageUrl,
 		}
 		commentDto := CommentDTO{
-			CreatedAt: ConvertTime(comment.CreatedAt),
+			CreatedAt: cu.ConvertTime(comment.CreatedAt),
 			CommentId: strconv.FormatInt(comment.ID, 10),
 			Content:   comment.Content,
 			LikeCount: 0,
@@ -207,10 +207,10 @@ func (s *Server) CreateCommentHandler() http.HandlerFunc {
 			Owner:     owner,
 		}
 
-		resp := api.ApiResponse{
+		resp := ApiResponse{
 			Data: commentDto,
 			Code: http.StatusOK,
 		}
-		api.JSONResponse(w, resp)
+		JSONResponse(w, resp)
 	}
 }

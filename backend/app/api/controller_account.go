@@ -1,4 +1,4 @@
-package controllers
+package api
 
 import (
 	"fmt"
@@ -8,17 +8,15 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-	"github.com/zhenghao-zhao/instapp/app/api"
 	"github.com/zhenghao-zhao/instapp/app/auth"
 	db "github.com/zhenghao-zhao/instapp/db/sqlc"
 )
 
 func (s *Server) DoLogin() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("New login request received")
 		if auth.IsLoggedIn(r) {
 			fmt.Println("user already logged in")
-			api.OKResponse(w)
+			OKResponse(w)
 			return
 		}
 
@@ -26,11 +24,11 @@ func (s *Server) DoLogin() http.HandlerFunc {
 		password := r.FormValue("password")
 		user, err := s.GetUserByEmail(r.Context(), email)
 
-		var resp api.ApiResponse
+		var resp ApiResponse
 
 		if err != nil || !auth.ComparePassword(password, user.Password) {
-			resp = api.ApiResponse{Message: "Incorrect email or password", Code: http.StatusBadRequest}
-			api.JSONResponse(w, resp)
+			resp = ApiResponse{Message: "Incorrect email or password", Code: http.StatusBadRequest}
+			JSONResponse(w, resp)
 			return
 		}
 
@@ -43,27 +41,26 @@ func (s *Server) DoLogin() http.HandlerFunc {
 
 		err = auth.CreateUserSession(w, r, info)
 		if err != nil {
-			api.JSONResponse(w, api.GenericErrorResp)
+			JSONResponse(w, GenericErrorResp)
 			return
 		}
-		api.OKResponse(w)
+		OKResponse(w)
 	}
 }
 
 func (s *Server) DoRegister() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("registration request received")
 		email := r.FormValue("email")
 		password := r.FormValue("password")
 		username := r.FormValue("username")
 		name := r.FormValue("name")
 
 		if email == "" || password == "" || username == "" || name == "" {
-			resp := api.ApiResponse{
+			resp := ApiResponse{
 				Message: "Email, pasword, and name must not be empty",
 				Code:    http.StatusBadRequest,
 			}
-			api.JSONResponse(w, resp)
+			JSONResponse(w, resp)
 			return
 		}
 
@@ -71,7 +68,7 @@ func (s *Server) DoRegister() http.HandlerFunc {
 
 		hashedPassword, err := auth.GeneratePassword(password)
 		if err != nil {
-			api.JSONResponse(w, api.GenericErrorResp)
+			JSONResponse(w, GenericErrorResp)
 			return
 		}
 
@@ -89,7 +86,7 @@ func (s *Server) DoRegister() http.HandlerFunc {
 		userInfo, err := s.CreateAccountTx(r.Context(), accountParams)
 		if err != nil {
 			log.Printf("failed to create account in db: %v", err.Error())
-			api.JSONResponse(w, GenDBResponse(err))
+			JSONResponse(w, GenDBResponse(err))
 			return
 		}
 
@@ -103,11 +100,11 @@ func (s *Server) DoRegister() http.HandlerFunc {
 		err = auth.CreateUserSession(w, r, sessionInfo)
 		if err != nil {
 			log.Printf("failed to create user session:%v", err.Error())
-			api.JSONResponse(w, api.GenericErrorResp)
+			JSONResponse(w, GenericErrorResp)
 			return
 		}
 
-		api.OKResponse(w)
+		OKResponse(w)
 	}
 }
 
@@ -116,11 +113,11 @@ func (s *Server) DoLogout() http.HandlerFunc {
 		err := auth.RemoveUserSession(w, r)
 		if err != nil {
 			log.Printf("failed to logout: %v", err.Error())
-			api.JSONResponse(w, api.GenericErrorResp)
+			JSONResponse(w, GenericErrorResp)
 			return
 		}
 
-		api.OKResponse(w)
+		OKResponse(w)
 	}
 }
 
@@ -129,7 +126,7 @@ func (s *Server) GetAuthProfileHandler() http.HandlerFunc {
 		sessionInfo, err := auth.GetUserSessionInfo(r)
 		if err != nil {
 			log.Printf("failed to acquire session info: %v", err.Error())
-			api.JSONResponse(w, api.AuthErrorResp)
+			JSONResponse(w, AuthErrorResp)
 			return
 		}
 
@@ -140,12 +137,12 @@ func (s *Server) GetAuthProfileHandler() http.HandlerFunc {
 			ProfileImageUrl: sessionInfo.ProfileImageUrl,
 		}
 
-		resp := api.ApiResponse{
+		resp := ApiResponse{
 			Data: authProfile,
 			Code: http.StatusOK,
 		}
 
-		api.JSONResponse(w, resp)
+		JSONResponse(w, resp)
 	}
 }
 
@@ -156,7 +153,7 @@ func (s *Server) GetUserProfileHandler() http.HandlerFunc {
 
 		userId, err := auth.GetSessionUserId(r)
 		if err != nil {
-			api.JSONResponse(w, api.AuthErrorResp)
+			JSONResponse(w, AuthErrorResp)
 			return
 		}
 
@@ -168,7 +165,7 @@ func (s *Server) GetUserProfileHandler() http.HandlerFunc {
 		data, err := s.GetProfileByUsernameOrID(r.Context(), params)
 		if err != nil {
 			log.Printf("Error retrieving user profile:%v", err.Error())
-			api.JSONResponse(w, api.NotFoundErrorResp)
+			JSONResponse(w, NotFoundErrorResp)
 			return
 		}
 
@@ -183,12 +180,12 @@ func (s *Server) GetUserProfileHandler() http.HandlerFunc {
 			IsFollowing:     data.IsFollowing,
 		}
 
-		resp := api.ApiResponse{
+		resp := ApiResponse{
 			Data: profile,
 			Code: http.StatusOK,
 		}
 
-		api.JSONResponse(w, resp)
+		JSONResponse(w, resp)
 	}
 }
 
@@ -197,32 +194,32 @@ func (s *Server) ChangeProfileImageHandler() http.HandlerFunc {
 		// check if file size is below max size 5MB
 		err := r.ParseMultipartForm(5 << 20)
 		if err != nil {
-			api.JSONResponse(w, api.FileSizeExceeded)
+			JSONResponse(w, FileSizeExceeded)
 			return
 		}
 
 		file, header, err := r.FormFile("profileImage")
 		if err != nil {
-			api.JSONResponse(w, api.FormFileErrorResp)
+			JSONResponse(w, FormFileErrorResp)
 			return
 		}
 
 		session, err := auth.Store.Get(r, auth.SessionNameUser)
 		if err != nil {
-			api.JSONResponse(w, api.AuthErrorResp)
+			JSONResponse(w, AuthErrorResp)
 			return
 		}
 
 		myUserId, err := auth.GetSessionUserId(r)
 		if err != nil {
-			api.JSONResponse(w, api.AuthErrorResp)
+			JSONResponse(w, AuthErrorResp)
 			return
 		}
 
 		imageUid, err := uuid.NewRandom()
 		if err != nil {
 			log.Printf("failed to generate random uuid: %v", err.Error())
-			api.JSONResponse(w, api.GenericErrorResp)
+			JSONResponse(w, GenericErrorResp)
 			return
 		}
 
@@ -231,7 +228,7 @@ func (s *Server) ChangeProfileImageHandler() http.HandlerFunc {
 		buf, err := s.ProcessImageFile(file, fileType)
 		if err != nil {
 			log.Printf("failed to process image file: %v", err.Error())
-			api.JSONResponse(w, api.GenericErrorResp)
+			JSONResponse(w, GenericErrorResp)
 			return
 		}
 		filename := imageUid.String()
@@ -239,13 +236,13 @@ func (s *Server) ChangeProfileImageHandler() http.HandlerFunc {
 		req, err := s.NewBucketRequest("PUT", filename, buf)
 		if err != nil {
 			log.Printf("failed to create request to upload image: %v", err.Error())
-			api.JSONResponse(w, api.GenericErrorResp)
+			JSONResponse(w, GenericErrorResp)
 			return
 		}
 		resp, err := s.client.Do(req)
 		if err != nil {
 			log.Printf("request to upload image to cloud failed: %v", err.Error())
-			api.JSONResponse(w, api.GenericErrorResp)
+			JSONResponse(w, GenericErrorResp)
 			return
 		}
 		defer resp.Body.Close()
@@ -259,7 +256,7 @@ func (s *Server) ChangeProfileImageHandler() http.HandlerFunc {
 		imageUid, err = s.UploadProfileImage(r.Context(), params)
 		if err != nil {
 			log.Printf("failed to add image to db: %v", err.Error())
-			api.JSONResponse(w, api.GenericErrorResp)
+			JSONResponse(w, GenericErrorResp)
 			return
 		}
 
@@ -269,16 +266,16 @@ func (s *Server) ChangeProfileImageHandler() http.HandlerFunc {
 		err = session.Save(r, w)
 		if err != nil {
 			log.Printf("failed to update image in session data: %v", err.Error())
-			api.JSONResponse(w, api.GenericErrorResp)
+			JSONResponse(w, GenericErrorResp)
 			return
 		}
 
-		apiResp := api.ApiResponse{
+		apiResp := ApiResponse{
 			Data: ProfileImageDTO{
 				ProfileImageUrl: profileImageUrl,
 			},
 			Code: http.StatusOK,
 		}
-		api.JSONResponse(w, apiResp)
+		JSONResponse(w, apiResp)
 	}
 }

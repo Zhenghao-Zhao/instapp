@@ -1,12 +1,11 @@
 import { useModalContext } from "@/app/_contexts/providers/ModalContextProivder";
 import { loadImage } from "@/app/_libs/utils";
-import {
-  ACCEPTED_UPLOAD_FILE_TYPE,
-  MAX_NUMBER_OF_UPLOAD_FILES,
-} from "@/app/_libs/vars/constants";
 import { ImageInfo } from "@/app/_libs/vars/types";
 import React, { FormEvent, useEffect, useRef, useState } from "react";
 import { icons, IconType } from "../ui/icon/Icons";
+
+const ACCEPTED_UPLOAD_FILE_TYPE = "image/webp,image/jpeg,image/png";
+const MAX_NUMBER_OF_UPLOAD_FILES = 10;
 
 const hasCorrectFileType = (type: string) => {
   return ACCEPTED_UPLOAD_FILE_TYPE.split(",").includes(type);

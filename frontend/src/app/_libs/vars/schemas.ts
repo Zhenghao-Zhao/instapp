@@ -35,8 +35,6 @@ export const PostSchema = z.object({
   isOwner: z.boolean(),
 });
 
-export const PostArraySchema = z.array(PostSchema);
-
 export const AuthProfileSchema = z.object({
   username: z.string(),
   userId: z.string(),
@@ -104,11 +102,4 @@ export const SignInSchema = SignUpSchema.pick({ email: true, password: true });
 
 export const VerifySchema = SignUpSchema.pick({ email: true }).extend({
   token: z.string().length(6),
-});
-
-export const ImageRowSchema = z.object({
-  id: number().optional(),
-  filename: string(),
-  created_at: string().datetime().optional(),
-  post_uid: string(),
 });
